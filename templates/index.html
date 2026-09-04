@@ -39,15 +39,6 @@
   background:#fff0f0!important;
   color:#a32b2b!important;
 }
-.core-badge{
-  display:inline-block;
-  padding:5px 8px;
-  border-radius:999px;
-  background:#edf5f8;
-  color:#526771;
-  font-size:.78rem;
-  white-space:nowrap;
-}
 .slider-line{
   display:flex;
   justify-content:space-between;
@@ -298,9 +289,8 @@ over time rather than treating one score as a diagnosis.
 <h3>Symptoms & recovery indicators</h3>
 
 <p class="muted">
-Rate each item from 0–10. The six core recovery indicators are required
-for the AI pattern analysis. You can also add and remove your own
-additional symptoms.
+Rate each symptom from 0–10. Add symptoms you want to track and remove
+ones that are not relevant to you.
 </p>
 
 <div id="symptomList"></div>
@@ -608,7 +598,7 @@ placeholder="Anything else from the visit..."></textarea>
 <summary>How RecoverPath AI works & its limitations</summary>
 
 <p>
-RecoverPath uses machine learning to identify changes in six defined
+RecoverPath uses machine learning to identify changes in defined
 self-reported recovery indicators. It does not diagnose concussion or
 another medical condition.
 </p>
@@ -715,10 +705,6 @@ const coreSymptoms=[
   {id:"activity",name:"Activity tolerance",direction:"better",value:5}
 ];
 
-const CORE_IDS=new Set(
-  coreSymptoms.map(x=>x.id)
-);
-
 const HISTORY_KEY="recoverpath_checkin_history";
 
 
@@ -732,51 +718,45 @@ function todayISO(){
 
 
 function loadSymptoms(){
-  let stored;
+  let stored=[];
 
   try{
-    stored=JSON.parse(
+    const parsed=JSON.parse(
       localStorage.getItem("recoverpath_symptoms") || "[]"
     );
+
+    if(Array.isArray(parsed)){
+      stored=parsed;
+    }
   }catch(error){
     stored=[];
   }
 
-  if(!Array.isArray(stored)){
-    stored=[];
+  /*
+  If this browser has never saved a symptom list,
+  begin with the default recovery indicators.
+
+  Otherwise respect the user's saved list, including symptoms
+  they intentionally removed.
+  */
+  if(!localStorage.getItem("recoverpath_symptoms")){
+    return coreSymptoms.map(item=>({
+      ...item,
+      custom:false,
+      startDate:""
+    }));
   }
 
-  /*
-  Always restore the six required model inputs.
-  This also repairs older browser data where a core indicator
-  may previously have been deleted.
-  */
-  const core=coreSymptoms.map(defaultItem=>{
-    const existing=stored.find(
-      item=>item.id===defaultItem.id
-    );
-
-    return {
-      ...defaultItem,
-      ...(existing || {}),
-      custom:false,
-      startDate:existing?.startDate || ""
-    };
-  });
-
-  const custom=stored
-  .filter(item=>
-    item &&
-    item.custom===true &&
-    !CORE_IDS.has(item.id)
-  )
+  return stored
+  .filter(item=>item && item.id && item.name)
   .map(item=>({
     ...item,
-    custom:true,
-    startDate:item.startDate || ""
+    value:Number.isFinite(Number(item.value))
+      ? Number(item.value)
+      : 5,
+    startDate:item.startDate || "",
+    custom:Boolean(item.custom)
   }));
-
-  return [...core,...custom];
 }
 
 
@@ -875,7 +855,11 @@ function renderSymptoms(){
   const box=document.getElementById("symptomList");
 
   if(!symptoms.length){
-    box.innerHTML=`<p class="muted">No symptoms currently being tracked.</p>`;
+    box.innerHTML=`
+      <p class="muted">
+        No symptoms currently being tracked. Add a symptom below.
+      </p>
+    `;
     return;
   }
 
@@ -892,25 +876,12 @@ function renderSymptoms(){
         </div>
       </div>
 
-      ${
-        s.custom
-        ? `
-          <button
-            type="button"
-            class="icon-delete"
-            onclick="removeSymptom(${index})"
-            title="Remove symptom"
-          >×</button>
-        `
-        : `
-          <span
-            class="core-badge"
-            title="Required input used by the RecoverPath pattern model"
-          >
-            Core AI indicator
-          </span>
-        `
-      }
+      <button
+        type="button"
+        class="icon-delete"
+        onclick="removeSymptom(${index})"
+        title="Remove symptom"
+      >×</button>
 
     </div>
 
@@ -988,16 +959,7 @@ function updateSymptomStart(id,value){
 
 
 function removeSymptom(index){
-  const item=symptoms[index];
-
-  if(!item) return;
-
-  if(!item.custom){
-    alert(
-      "This is one of the six core recovery indicators used by the RecoverPath AI model, so it cannot be removed."
-    );
-    return;
-  }
+  if(index<0 || index>=symptoms.length) return;
 
   symptoms.splice(index,1);
   saveSymptoms();
@@ -1010,13 +972,12 @@ addSymptom.onclick=()=>{
 
   if(!name) return;
 
-  const id=safeId(name);
+  let id=safeId(name);
 
   if(!id) return;
 
   if(symptoms.some(x=>x.id===id)){
-    alert("That symptom is already being tracked.");
-    return;
+    id=`${id}_${Date.now()}`;
   }
 
   symptoms.push({
@@ -1144,24 +1105,18 @@ function fixedValue(id){
   const item=symptoms.find(x=>x.id===id);
 
   if(!item){
-    throw new Error(
-      `Required core recovery indicator is missing: ${id}`
-    );
+    return null;
   }
 
   const value=Number(item.value);
 
   if(!Number.isFinite(value)){
-    throw new Error(
-      `Invalid value for core recovery indicator: ${id}`
-    );
+    return null;
   }
 
   return Math.max(0,Math.min(10,value));
 }
 
-
-/* BROWSER-OWNED RECOVERY HISTORY */
 
 function getLocalHistory(){
   try{
@@ -1224,6 +1179,8 @@ function storeCheckin(entry){
     String(a.checkin_date).localeCompare(String(b.checkin_date))
   );
 
+  history=history.slice(-365);
+
   saveLocalHistory(history);
 
   return history;
@@ -1282,15 +1239,40 @@ async function analyzeStoredHistory(){
 /* ROUTINES */
 
 function getRoutines(){
+  let items=[];
+
   try{
-    const items=JSON.parse(
+    const parsed=JSON.parse(
       localStorage.getItem("recoverpath_routines") || "[]"
     );
 
-    return Array.isArray(items) ? items : [];
+    if(Array.isArray(parsed)){
+      items=parsed;
+    }
   }catch(error){
-    return [];
+    items=[];
   }
+
+  let changed=false;
+
+  items=items.map((item,index)=>{
+    if(item.id){
+      return item;
+    }
+
+    changed=true;
+
+    return {
+      ...item,
+      id:`routine_${Date.now()}_${index}_${Math.random().toString(36).slice(2,7)}`
+    };
+  });
+
+  if(changed){
+    saveRoutines(items);
+  }
+
+  return items;
 }
 
 
@@ -1366,7 +1348,7 @@ addRoutine.onclick=()=>{
   const items=getRoutines();
 
   items.push({
-    id:String(Date.now()+Math.random()),
+    id:`routine_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
     name,
     time
   });
@@ -1687,7 +1669,7 @@ function renderVisitHistory(){
 }
 
 
-/* REAL DATE-BASED RECOVERY COMPARISON */
+/* RECOVERY COMPARISON */
 
 function closestEntryAtOrBefore(entries,targetDate){
   const target=parseDateOnly(targetDate);
@@ -1787,20 +1769,32 @@ function renderPatternComparison(){
   }else{
 
     coreSymptoms.forEach(s=>{
-      const before=Number(previous[s.id]);
-      const now=Number(latest[s.id]);
+      const before=previous[s.id];
+      const now=latest[s.id];
 
       if(
-        Number.isNaN(before) ||
-        Number.isNaN(now)
+        before===null ||
+        before===undefined ||
+        now===null ||
+        now===undefined
       ){
         return;
       }
 
-      const change=now-before;
+      const beforeNumber=Number(before);
+      const nowNumber=Number(now);
+
+      if(
+        Number.isNaN(beforeNumber) ||
+        Number.isNaN(nowNumber)
+      ){
+        return;
+      }
+
+      const change=nowNumber-beforeNumber;
 
       if(change===0){
-        stable.push(`${s.name}: ${now}/10`);
+        stable.push(`${s.name}: ${nowNumber}/10`);
         return;
       }
 
@@ -1874,6 +1868,7 @@ function entriesForTimelineRange(){
   }
 
   const days=Number(timelineRange);
+
   const latestDate=parseDateOnly(
     entries[entries.length-1].checkin_date
   );
@@ -2197,51 +2192,73 @@ analyze.onclick=async()=>{
     return;
   }
 
-  let payload;
+  const payload={
+    checkin_date:checkin_date.value,
 
-  try{
-    payload={
-      checkin_date:checkin_date.value,
+    headache:fixedValue("headache"),
+    dizziness:fixedValue("dizziness"),
+    sleep:fixedValue("sleep"),
+    screen_tolerance:fixedValue("screen_tolerance"),
+    concentration:fixedValue("concentration"),
+    activity:fixedValue("activity"),
 
-      headache:fixedValue("headache"),
-      dizziness:fixedValue("dizziness"),
-      sleep:fixedValue("sleep"),
-      screen_tolerance:fixedValue("screen_tolerance"),
-      concentration:fixedValue("concentration"),
-      activity:fixedValue("activity"),
+    notes:savedNotes.map(x=>x.text).join("; "),
+    saved_notes:savedNotes,
 
-      notes:savedNotes.map(x=>x.text).join("; "),
-      saved_notes:savedNotes,
+    tracked_symptoms:symptoms.map(s=>({
+      id:s.id,
+      name:s.name,
+      value:s.value,
+      direction:s.direction
+    })),
 
-      tracked_symptoms:symptoms.map(s=>({
-        id:s.id,
-        name:s.name,
-        value:s.value,
-        direction:s.direction
-      })),
+    symptom_durations:collectDurations(),
 
-      symptom_durations:collectDurations(),
+    safety_notes:safety_notes.value.trim(),
+    urgent_change:urgent_change.checked,
 
-      safety_notes:safety_notes.value.trim(),
-      urgent_change:urgent_change.checked,
+    red_flags:urgent_change.checked
+    ? ["reported_significant_worsening"]
+    : []
+  };
 
-      red_flags:urgent_change.checked
-      ? ["reported_significant_worsening"]
-      : []
-    };
+  /*
+  The current backend model still requires its original six
+  model inputs. If the user has removed one of those symptoms,
+  we do NOT fabricate a 5/10 value.
+  */
+  const missingModelInputs=[
+    ["headache","Headache severity"],
+    ["dizziness","Dizziness"],
+    ["sleep","Sleep quality"],
+    ["screen_tolerance","Screen tolerance"],
+    ["concentration","Concentration difficulty"],
+    ["activity","Activity tolerance"]
+  ]
+  .filter(([id])=>payload[id]===null)
+  .map(([,name])=>name);
 
-  }catch(error){
+  if(missingModelInputs.length){
     alert(
-      "A required core recovery indicator is missing or invalid. Refresh the page and try again."
+      "You removed one or more symptoms used by the current AI model. "
+      +"RecoverPath will not invent scores for missing symptoms. "
+      +"Add the missing symptom back before running AI pattern analysis: "
+      +missingModelInputs.join(", ")
     );
     return;
   }
 
   const previousHistory=getLocalHistory();
 
+  /*
+  Only earlier records are sent as history for this check-in.
+  A backdated check-in must never be compared against future records.
+  */
   const historyForAnalysis=
   previousHistory.filter(
-    x=>x.checkin_date!==payload.checkin_date
+    x=>
+      x.checkin_date &&
+      x.checkin_date<payload.checkin_date
   );
 
   try{
