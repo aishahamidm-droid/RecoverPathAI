@@ -2,10 +2,312 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RecoverPath AI</title>
 <link rel="stylesheet" href="/static/style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+.symptom-card{
+  border:1px solid #dce5ea;
+  border-radius:14px;
+  padding:14px;
+  margin:12px 0;
+  background:#fff;
+}
+.symptom-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+.symptom-title{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.symptom-title small{color:#65737d}
+.icon-delete{
+  width:34px !important;
+  min-width:34px !important;
+  height:34px;
+  padding:0 !important;
+  border-radius:50% !important;
+  border:1px solid #d8e1e6 !important;
+  background:#fff !important;
+  color:#65737d !important;
+  font-size:20px;
+  line-height:30px;
+  cursor:pointer;
+}
+.icon-delete:hover{
+  background:#fff1f1 !important;
+  color:#a72d2d !important;
+}
+.symptom-slider{
+  margin-top:12px;
+}
+.symptom-slider .slider-line{
+  display:flex;
+  justify-content:space-between;
+}
+.symptom-slider input[type="range"]{
+  width:100%;
+}
+.duration-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+.duration-grid label,
+.setting-grid label{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+.duration-grid input,
+.setting-grid input,
+.add-row input,
+.routine-grid input,
+.routine-grid select,
+.safety-box textarea{
+  box-sizing:border-box;
+  width:100%;
+  padding:10px;
+  border:1px solid #ccd8df;
+  border-radius:8px;
+}
+.add-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  align-items:end;
+}
+.add-row button{
+  width:auto !important;
+  margin:0 !important;
+}
+.section-divider{
+  border:0;
+  border-top:1px solid #dbe3e8;
+  margin:22px 0;
+}
+.saved-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  padding:11px;
+  margin:8px 0;
+  border:1px solid #dbe5ea;
+  border-radius:10px;
+  background:#f8fbfc;
+}
+.saved-item span{
+  display:block;
+  color:#66747e;
+  margin-top:4px;
+  font-size:.9rem;
+}
+.saved-item button{
+  width:32px !important;
+  min-width:32px !important;
+  height:32px;
+  padding:0 !important;
+  margin:0 !important;
+  border-radius:50% !important;
+  background:#fff !important;
+  color:#687780 !important;
+  border:1px solid #d8e1e6 !important;
+}
+.safety-box{
+  border:1px solid #f0d4d4;
+  border-radius:14px;
+  padding:14px;
+  background:#fffafa;
+}
+.safety-box textarea{
+  min-height:90px;
+  background:#fff;
+}
+.safety-hint{
+  font-size:.9rem;
+  color:#6d7479;
+}
+.reminder-box{
+  border:1px solid #d8e5eb;
+  border-radius:14px;
+  padding:14px;
+  background:#f8fbfc;
+}
+.setting-grid{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  align-items:end;
+}
+.setting-grid button{
+  width:auto !important;
+  margin:0 !important;
+}
+.pattern-tabs{
+  display:flex;
+  gap:7px;
+  margin:14px 0;
+}
+.pattern-tabs button{
+  width:auto !important;
+  margin:0 !important;
+  padding:8px 15px !important;
+  background:#edf3f6 !important;
+  color:#31434d !important;
+}
+.pattern-tabs button.active{
+  background:#197ca3 !important;
+  color:#fff !important;
+}
+.change-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:14px;
+}
+.change-box{
+  padding:13px;
+  border-radius:12px;
+  border:1px solid #dce5ea;
+  background:#f8fbfc;
+}
+.change-box h4{
+  margin:0 0 8px;
+}
+.change-box ul{
+  padding-left:18px;
+  margin:0;
+}
+.routine-grid{
+  display:grid;
+  gap:10px;
+}
+.routine-item{
+  border:1px solid #dce5ea;
+  border-radius:12px;
+  padding:12px;
+}
+.routine-item-head{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+.routine-item-head button{
+  width:30px !important;
+  min-width:30px !important;
+  height:30px;
+  margin:0 !important;
+  padding:0 !important;
+  border-radius:50% !important;
+  background:#fff !important;
+  color:#687780 !important;
+  border:1px solid #d8e1e6 !important;
+}
+.routine-form{
+  display:grid;
+  grid-template-columns:1fr 130px;
+  gap:8px;
+  margin-top:10px;
+}
+.modal-backdrop{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(12,24,32,.72);
+  padding:24px;
+  overflow:auto;
+}
+.modal-backdrop.show{
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+}
+.analysis-modal{
+  width:min(900px,100%);
+  margin:auto;
+  background:#fff;
+  border-radius:20px;
+  box-shadow:0 20px 80px rgba(0,0,0,.28);
+  overflow:hidden;
+}
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  padding:22px 24px;
+  border-bottom:1px solid #e0e7eb;
+}
+.modal-header h2{margin:3px 0}
+.modal-close{
+  width:38px !important;
+  min-width:38px !important;
+  height:38px;
+  margin:0 !important;
+  padding:0 !important;
+  border-radius:50% !important;
+  background:#edf3f6 !important;
+  color:#24343d !important;
+  font-size:22px;
+}
+.modal-body{
+  padding:24px;
+}
+.modal-summary{
+  white-space:pre-wrap;
+  font-family:inherit;
+  line-height:1.55;
+  background:#f6f9fa;
+  padding:18px;
+  border-radius:12px;
+}
+.modal-actions{
+  display:flex;
+  gap:10px;
+  padding:0 24px 24px;
+}
+.modal-actions button{
+  width:auto !important;
+}
+.reminder-modal .analysis-modal{
+  max-width:560px;
+}
+.muted{color:#6c7981}
+.timeline-controls{
+  display:flex;
+  gap:7px;
+  margin-bottom:12px;
+}
+.timeline-controls button{
+  width:auto !important;
+  padding:7px 13px !important;
+  margin:0 !important;
+  background:#edf3f6 !important;
+  color:#31434d !important;
+}
+.timeline-controls button.active{
+  background:#197ca3 !important;
+  color:#fff !important;
+}
+@media(max-width:700px){
+  .duration-grid,
+  .change-grid,
+  .routine-form,
+  .setting-grid,
+  .add-row{
+    grid-template-columns:1fr;
+  }
+}
+</style>
 </head>
 
 <body>
@@ -14,99 +316,147 @@
   <div>
     <small>RESPONSIBLE AI • CONCUSSION RECOVERY PROTOTYPE</small>
     <h1>RecoverPath AI</h1>
-    <p>Track symptoms, understand recovery patterns, and prepare clearer information for your clinician.</p>
+    <p>
+      Track symptoms, spot recovery changes, organize daily routines,
+      and prepare clearer conversations with clinicians.
+    </p>
   </div>
   <b>Privacy-first prototype</b>
 </header>
 
 <main>
 
-<!-- DAILY CHECK-IN -->
 <section class="card form">
   <small>TODAY</small>
   <h2>Daily Check-in</h2>
+
   <p>
-    Record what you are experiencing today. You can choose which symptoms
-    you want to track and record how long each symptom has been present.
+    Record how you are feeling today and compare changes over time.
   </p>
 
-  <div class="checkin-date">
-    <label for="checkin_date"><b>Check-in date</b></label>
+  <label>
+    <b>Check-in date</b>
     <input id="checkin_date" type="date">
-  </div>
+  </label>
+
+  <hr class="section-divider">
 
   <h3>Symptoms & recovery indicators</h3>
 
+  <p class="muted">
+    Rate each item from 0–10. Add or remove tracked symptoms as needed.
+  </p>
+
   <div id="symptomList"></div>
 
-  <div class="add-symptom-box">
-    <label for="newSymptom"><b>Add another symptom</b></label>
-    <div class="inline-row">
-      <input
-        id="newSymptom"
-        type="text"
-        placeholder="e.g. Light sensitivity"
-      >
-      <button type="button" id="addSymptom">Add symptom</button>
-    </div>
+  <div class="add-row">
+    <input
+      id="newSymptom"
+      type="text"
+      placeholder="Add another symptom, e.g. Light sensitivity"
+    >
+    <button type="button" id="addSymptom">Add</button>
   </div>
 
-  <hr>
+  <hr class="section-divider">
 
   <h3>Notes / Possible Triggers</h3>
-  <p>
-    Add something that may have affected your symptoms, such as poor sleep,
-    screen exposure, exercise, noise, stress, or another possible trigger.
+
+  <p class="muted">
+    Record anything that may have affected your day — sleep, screens,
+    food, noise, exercise, stress, medication, or another observation.
   </p>
 
   <textarea
     id="notes"
-    placeholder="e.g. Poor sleep, long screen session, noisy room..."
+    placeholder="What happened today?"
   ></textarea>
 
-  <div class="trigger-details">
-    <label for="trigger_start"><b>When did this start?</b></label>
-    <input id="trigger_start" type="date">
+  <div class="duration-grid">
+    <label>
+      When did it start?
+      <input id="trigger_start" type="date">
+    </label>
 
-    <label for="trigger_duration"><b>Duration</b></label>
-    <input
-      id="trigger_duration"
-      type="text"
-      placeholder="e.g. 3 days, 2 hours"
-    >
+    <label>
+      Duration
+      <input
+        id="trigger_duration"
+        type="text"
+        placeholder="e.g. 2 hours"
+      >
+    </label>
   </div>
 
-  <button type="button" id="addNote">Add note / trigger</button>
+  <button type="button" id="addNote">
+    Save note
+  </button>
 
-  <div class="saved-box">
-    <h4>Saved notes & possible triggers</h4>
-    <div id="savedNotes">
-      <p class="muted">No notes added for today's check-in yet.</p>
+  <div id="savedNotes"></div>
+
+  <hr class="section-divider">
+
+  <h3>Safety Check</h3>
+
+  <div class="safety-box">
+    <p>
+      <b>Have you experienced a new or significantly worsening symptom?</b>
+    </p>
+
+    <textarea
+      id="safety_notes"
+      placeholder="Describe any new or significantly worsening symptoms here..."
+    ></textarea>
+
+    <p class="safety-hint">
+      This field is separate from ordinary notes because sudden or severe
+      changes may need medical attention. RecoverPath AI does not use AI
+      to decide whether an emergency is occurring.
+    </p>
+
+    <label>
+      <input id="urgent_change" type="checkbox">
+      I am reporting a sudden, severe, or significantly worsening change.
+    </label>
+
+    <div id="urgentHelp"></div>
+  </div>
+
+  <hr class="section-divider">
+
+  <h3>Daily Check-in Reminder</h3>
+
+  <div class="reminder-box">
+    <p>
+      Choose when RecoverPath should remind you to complete your daily check-in.
+    </p>
+
+    <div class="setting-grid">
+      <label>
+        Reminder time
+        <input id="reminderTime" type="time" value="20:00">
+      </label>
+
+      <button type="button" id="saveReminder">
+        Save reminder
+      </button>
     </div>
+
+    <p id="reminderStatus" class="muted"></p>
   </div>
-
-  <hr>
-
-  <h3>Emergency warning signs</h3>
-  <p>
-    Select any warning signs being experienced now. Safety warnings are
-    evaluated separately from the AI recovery-pattern model.
-  </p>
-
-  <div id="flags"></div>
 
   <button type="button" id="analyze">
     Analyze Today's Check-in
   </button>
 
-  <div class="demo-controls">
-    <small>DEMO CONTROLS</small>
-    <p>
-      For hackathon demonstration only. Loads an example symptom setback
-      so the recovery analysis can be tested quickly.
+  <div style="margin-top:18px">
+    <small>DEMO CONTROL</small>
+    <p class="muted">
+      Loads example values for demonstration only.
     </p>
+
     <button type="button" class="secondary" id="demo">
-      Demo: Load Example Setback
+      Load Example Setback
     </button>
   </div>
 </section>
@@ -114,24 +464,33 @@
 
 <div class="stack">
 
-<!-- TODAY'S CHECK-IN SUMMARY -->
 <section class="card">
-  <small>TODAY'S ANALYSIS</small>
-  <div class="top">
-    <h2>Today's Check-in Summary</h2>
-    <button class="copy" id="copyToday">Copy</button>
-  </div>
+  <small>FOLLOW-UP</small>
+  <h2>Today's Routine</h2>
 
   <p>
-    This summary is generated only when you choose
-    <b>Analyze Today's Check-in</b>.
+    Build a simple daily routine to support consistency during recovery.
+    These are personal reminders, not medical prescriptions.
   </p>
 
-  <pre id="todaySummary">No check-in analyzed yet.</pre>
+  <div id="routineList" class="routine-grid"></div>
+
+  <div class="routine-form">
+    <input
+      id="routineName"
+      type="text"
+      placeholder="e.g. Breakfast, hydration, walk, screen break"
+    >
+
+    <input id="routineTime" type="time">
+  </div>
+
+  <button type="button" id="addRoutine">
+    Add to routine
+  </button>
 </section>
 
 
-<!-- CURRENT PATTERN -->
 <section class="card">
   <small>RECOVERY PATTERN</small>
 
@@ -141,24 +500,75 @@
   </div>
 
   <p id="headline">
-    Complete and analyze today's check-in to update your recovery pattern.
+    Complete a check-in to compare recovery changes.
   </p>
+
+  <div class="pattern-tabs">
+    <button type="button" class="active" data-period="daily">
+      Daily
+    </button>
+    <button type="button" data-period="weekly">
+      Weekly
+    </button>
+    <button type="button" data-period="monthly">
+      Monthly
+    </button>
+  </div>
+
+  <p id="periodDescription" class="muted">
+    Comparing your latest check-in with your previous check-in.
+  </p>
+
+  <div class="change-grid">
+
+    <div class="change-box">
+      <h4>Improved</h4>
+      <ul id="improvedList">
+        <li>Not enough data yet.</li>
+      </ul>
+    </div>
+
+    <div class="change-box">
+      <h4>Worsened</h4>
+      <ul id="worsenedList">
+        <li>Not enough data yet.</li>
+      </ul>
+    </div>
+
+    <div class="change-box">
+      <h4>Stable</h4>
+      <ul id="stableList">
+        <li>Not enough data yet.</li>
+      </ul>
+    </div>
+
+  </div>
 
   <div id="safety"></div>
 </section>
 
 
-<!-- TIMELINE -->
 <section class="card">
   <h2>Recovery Timeline</h2>
+
   <p>
-    View how your recorded recovery pattern changes across check-ins.
+    See how your overall self-reported symptom burden changes over time.
+    A downward movement means lower calculated burden; an upward movement
+    means higher calculated burden.
   </p>
+
+  <div class="timeline-controls">
+    <button type="button" class="active" data-range="all">All</button>
+    <button type="button" data-range="7">7 days</button>
+    <button type="button" data-range="30">30 days</button>
+  </div>
+
   <canvas id="chart"></canvas>
+
+  <p id="timelineMeaning" class="muted"></p>
 </section>
 
 
-<!-- PLAN -->
 <section class="card">
   <small>TODAY</small>
   <h2>Daily Recovery Plan</h2>
@@ -166,7 +576,6 @@
 </section>
 
 
-<!-- INSIGHTS -->
 <section class="card">
   <small>YOUR DATA</small>
   <h2>Pattern Insights</h2>
@@ -174,7 +583,6 @@
 </section>
 
 
-<!-- DOCTOR SUMMARY -->
 <section class="card">
   <small>FOR APPOINTMENTS</small>
 
@@ -183,46 +591,48 @@
     <button class="copy" id="copy">Copy</button>
   </div>
 
-  <p>
-    A longer summary based on your saved check-ins over time.
-  </p>
-
   <pre id="summary"></pre>
 </section>
 
 
-<!-- RESPONSIBLE AI -->
 <section class="card">
   <h2>Responsible AI Guardrails</h2>
 
   <div class="guards">
+
     <div>
       <b>No diagnosis</b>
-      <span>AI identifies patterns, not diseases.</span>
+      <span>RecoverPath identifies patterns, not diseases.</span>
     </div>
 
     <div>
-      <b>Safety overrides AI</b>
-      <span>Emergency warning signs use deterministic rules.</span>
+      <b>Safety separated from AI</b>
+      <span>
+        Emergency decisions are not delegated to the ML model.
+      </span>
     </div>
 
     <div>
       <b>Duration is context</b>
       <span>
-        Symptom duration can be highlighted but does not determine
-        medical seriousness by itself.
+        How long a symptom lasts can help show patterns but does not,
+        by itself, determine medical seriousness.
       </span>
     </div>
 
     <div>
       <b>Transparent limits</b>
-      <span>The ML model currently uses synthetic demonstration data.</span>
+      <span>
+        The prototype ML model uses synthetic demonstration data.
+      </span>
     </div>
+
   </div>
 </section>
 
 </div>
 </main>
+
 
 <footer>
   Educational hackathon prototype — not a medical device and not a
@@ -230,91 +640,233 @@
 </footer>
 
 
+<!-- FULL DAILY ANALYSIS POPUP -->
+
+<div id="analysisBackdrop" class="modal-backdrop">
+
+  <div class="analysis-modal">
+
+    <div class="modal-header">
+      <div>
+        <small>DAILY RECOVERY REVIEW</small>
+        <h2>Today's Check-in Analysis</h2>
+        <span id="analysisDate"></span>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close"
+        id="closeAnalysis"
+        aria-label="Close"
+      >
+        ×
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <div id="analysisSafety"></div>
+
+      <pre
+        id="analysisSummary"
+        class="modal-summary"
+      ></pre>
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button type="button" id="copyAnalysis">
+        Copy summary
+      </button>
+
+      <button
+        type="button"
+        class="secondary"
+        id="doneAnalysis"
+      >
+        Done
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+
+<!-- DAILY REMINDER POPUP -->
+
+<div
+  id="reminderBackdrop"
+  class="modal-backdrop reminder-modal"
+>
+
+  <div class="analysis-modal">
+
+    <div class="modal-header">
+      <div>
+        <small>DAILY REMINDER</small>
+        <h2>Time for your RecoverPath check-in</h2>
+      </div>
+    </div>
+
+    <div class="modal-body">
+
+      <p>
+        Record today's symptoms, changes, triggers, and recovery routine
+        while the information is still fresh.
+      </p>
+
+      <p class="muted">
+        Completing regular check-ins makes daily, weekly, and monthly
+        comparisons more useful.
+      </p>
+
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" id="startCheckin">
+        Start today's check-in
+      </button>
+
+      <button
+        type="button"
+        class="secondary"
+        id="dismissReminder"
+      >
+        Remind me later
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
 <script>
 
 const defaultSymptoms = [
   {
-    id: "headache",
-    name: "Headache severity",
-    direction: "worse",
-    value: 5
+    id:"headache",
+    name:"Headache severity",
+    direction:"worse",
+    value:5
   },
   {
-    id: "dizziness",
-    name: "Dizziness",
-    direction: "worse",
-    value: 5
+    id:"dizziness",
+    name:"Dizziness",
+    direction:"worse",
+    value:5
   },
   {
-    id: "sleep",
-    name: "Sleep quality",
-    direction: "better",
-    value: 5
+    id:"sleep",
+    name:"Sleep quality",
+    direction:"better",
+    value:5
   },
   {
-    id: "screen_tolerance",
-    name: "Screen tolerance",
-    direction: "better",
-    value: 5
+    id:"screen_tolerance",
+    name:"Screen tolerance",
+    direction:"better",
+    value:5
   },
   {
-    id: "concentration",
-    name: "Concentration difficulty",
-    direction: "worse",
-    value: 5
+    id:"concentration",
+    name:"Concentration difficulty",
+    direction:"worse",
+    value:5
   },
   {
-    id: "activity",
-    name: "Activity tolerance",
-    direction: "better",
-    value: 5
+    id:"activity",
+    name:"Activity tolerance",
+    direction:"better",
+    value:5
   }
 ];
 
-let symptoms = [...defaultSymptoms];
+let symptoms =
+  JSON.parse(localStorage.getItem("recoverpath_symptoms") || "null")
+  || defaultSymptoms.map(x => ({...x}));
+
 let savedNotes = [];
-let ch = null;
+let statusData = null;
+let chartInstance = null;
+let patternPeriod = "daily";
+let timelineRange = "all";
 
-const checkinDate = document.getElementById("checkin_date");
-const today = new Date().toISOString().split("T")[0];
 
-checkinDate.value = today;
+const today =
+  new Date().toISOString().split("T")[0];
+
+document.getElementById("checkin_date").value = today;
 document.getElementById("trigger_start").value = today;
 
 
-function safeId(text) {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
+function escapeHTML(value){
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
 
-function renderSymptoms() {
-  const container = document.getElementById("symptomList");
+function safeId(text){
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g,"_")
+    .replace(/^_+|_+$/g,"");
+}
 
-  container.innerHTML = symptoms.map((s, index) => `
-    <div class="symptom-item">
-      <div class="symptom-heading">
-        <div>
-          <b>${s.name}</b>
+
+function saveSymptoms(){
+  localStorage.setItem(
+    "recoverpath_symptoms",
+    JSON.stringify(symptoms)
+  );
+}
+
+
+function renderSymptoms(){
+
+  const container =
+    document.getElementById("symptomList");
+
+  if(!symptoms.length){
+    container.innerHTML =
+      `<p class="muted">No symptoms are currently being tracked.</p>`;
+    return;
+  }
+
+  container.innerHTML = symptoms.map((s,index)=>`
+
+    <div class="symptom-card">
+
+      <div class="symptom-top">
+
+        <div class="symptom-title">
+          <b>${escapeHTML(s.name)}</b>
           <small>
-            Higher is ${s.direction === "worse" ? "worse" : "better"}
+            Higher is
+            ${s.direction === "better" ? "better" : "worse"}
           </small>
         </div>
 
         <button
           type="button"
-          class="remove-symptom"
+          class="icon-delete"
+          title="Remove ${escapeHTML(s.name)}"
           onclick="removeSymptom(${index})"
         >
-          Remove
+          ×
         </button>
+
       </div>
 
-      <div class="slider">
-        <div>
+      <div class="symptom-slider">
+
+        <div class="slider-line">
           <span>Today</span>
           <strong id="${s.id}v">${s.value}</strong>
         </div>
@@ -326,16 +878,21 @@ function renderSymptoms() {
           max="10"
           value="${s.value}"
           oninput="
+            updateSymptomValue('${s.id}',this.value);
             document.getElementById('${s.id}v').textContent=this.value;
-            updateSymptomValue('${s.id}', this.value);
           "
         >
+
       </div>
 
-      <div class="duration-row">
+      <div class="duration-grid">
+
         <label>
           Symptom started
-          <input id="${s.id}_start" type="date">
+          <input
+            id="${s.id}_start"
+            type="date"
+          >
         </label>
 
         <label>
@@ -346,35 +903,51 @@ function renderSymptoms() {
             placeholder="e.g. 5 days"
           >
         </label>
+
       </div>
+
     </div>
+
   `).join("");
 }
 
 
-function updateSymptomValue(id, value) {
-  const symptom = symptoms.find(x => x.id === id);
-  if (symptom) symptom.value = Number(value);
+function updateSymptomValue(id,value){
+
+  const item =
+    symptoms.find(x=>x.id===id);
+
+  if(item){
+    item.value = Number(value);
+    saveSymptoms();
+  }
 }
 
 
-function removeSymptom(index) {
-  symptoms.splice(index, 1);
+function removeSymptom(index){
+
+  symptoms.splice(index,1);
+  saveSymptoms();
   renderSymptoms();
 }
 
 
-document.getElementById("addSymptom").onclick = () => {
-  const input = document.getElementById("newSymptom");
-  const name = input.value.trim();
+document.getElementById("addSymptom").onclick = ()=>{
 
-  if (!name) return;
+  const input =
+    document.getElementById("newSymptom");
 
-  let id = safeId(name);
+  const name =
+    input.value.trim();
 
-  if (!id) return;
+  if(!name) return;
 
-  if (symptoms.some(x => x.id === id)) {
+  const id =
+    safeId(name);
+
+  if(!id) return;
+
+  if(symptoms.some(x=>x.id===id)){
     alert("That symptom is already being tracked.");
     return;
   }
@@ -382,356 +955,1094 @@ document.getElementById("addSymptom").onclick = () => {
   symptoms.push({
     id,
     name,
-    direction: "worse",
-    value: 5,
-    custom: true
+    direction:"worse",
+    value:5,
+    custom:true
   });
 
-  input.value = "";
+  input.value="";
+
+  saveSymptoms();
   renderSymptoms();
 };
 
 
-function renderNotes() {
-  const box = document.getElementById("savedNotes");
+function renderNotes(){
 
-  if (!savedNotes.length) {
+  const box =
+    document.getElementById("savedNotes");
+
+  if(!savedNotes.length){
     box.innerHTML =
-      `<p class="muted">No notes added for today's check-in yet.</p>`;
+      `<p class="muted">No notes saved for today yet.</p>`;
     return;
   }
 
-  box.innerHTML = savedNotes.map((item, index) => `
-    <div class="saved-note">
-      <div>
-        <b>${item.text}</b>
-        <span>
-          ${item.start ? "Started: " + item.start : ""}
-          ${item.duration ? " • Duration: " + item.duration : ""}
-        </span>
+  box.innerHTML =
+    savedNotes.map((item,index)=>`
+
+      <div class="saved-item">
+
+        <div>
+
+          <b>${escapeHTML(item.text)}</b>
+
+          <span>
+            ${item.start
+              ? "Started: "+escapeHTML(item.start)
+              : ""
+            }
+
+            ${item.duration
+              ? " • Duration: "+escapeHTML(item.duration)
+              : ""
+            }
+          </span>
+
+        </div>
+
+        <button
+          type="button"
+          title="Delete note"
+          onclick="removeNote(${index})"
+        >
+          ×
+        </button>
+
       </div>
 
-      <button
-        type="button"
-        onclick="removeNote(${index})"
-      >
-        Remove
-      </button>
-    </div>
-  `).join("");
+    `).join("");
 }
 
 
-function removeNote(index) {
-  savedNotes.splice(index, 1);
+function removeNote(index){
+
+  savedNotes.splice(index,1);
   renderNotes();
 }
 
 
-document.getElementById("addNote").onclick = () => {
-  const text = document.getElementById("notes").value.trim();
-  const start = document.getElementById("trigger_start").value;
-  const duration =
-    document.getElementById("trigger_duration").value.trim();
+document.getElementById("addNote").onclick = ()=>{
 
-  if (!text) {
-    alert("Enter a note or possible trigger first.");
+  const text =
+    document.getElementById("notes").value.trim();
+
+  if(!text){
+    alert("Write a note first.");
     return;
   }
 
   savedNotes.push({
     text,
-    start,
-    duration
+    start:
+      document.getElementById("trigger_start").value,
+    duration:
+      document.getElementById("trigger_duration").value.trim()
   });
 
-  document.getElementById("notes").value = "";
-  document.getElementById("trigger_duration").value = "";
+  document.getElementById("notes").value="";
+  document.getElementById("trigger_duration").value="";
 
   renderNotes();
 };
 
 
-const warningFlags = [
-  ["worsening_headache", "Headache getting much worse"],
-  ["repeated_vomiting", "Repeated vomiting"],
-  ["seizure", "Seizure"],
-  ["weakness", "New weakness/numbness"],
-  ["confusion", "Increasing confusion"],
-  ["hard_to_wake", "Hard to wake"],
-  ["slurred_speech", "Slurred speech"],
-  ["vision_loss", "Major new vision change"]
-];
+document.getElementById("urgent_change").onchange = function(){
 
-document.getElementById("flags").innerHTML =
-  warningFlags.map(x => `
-    <label>
-      <input type="checkbox" value="${x[0]}">
-      ${x[1]}
-    </label>
-  `).join("");
+  const box =
+    document.getElementById("urgentHelp");
+
+  if(this.checked){
+
+    box.innerHTML = `
+      <div class="alert" style="margin-top:12px">
+        <b>Do not rely on RecoverPath AI for an emergency assessment.</b>
+        <p>
+          A sudden, severe, or rapidly worsening symptom may require
+          urgent medical evaluation. Contact local emergency services
+          or an appropriate medical professional when emergency care
+          may be needed.
+        </p>
+      </div>
+    `;
+
+  }else{
+    box.innerHTML="";
+  }
+};
 
 
-function getFixedValue(id, fallback = 5) {
-  const symptom = symptoms.find(x => x.id === id);
-  return symptom ? Number(symptom.value) : fallback;
-}
+function collectDurations(){
 
+  const output={};
 
-function collectDurations() {
-  const result = {};
+  symptoms.forEach(s=>{
 
-  symptoms.forEach(s => {
-    const start = document.getElementById(`${s.id}_start`);
-    const duration = document.getElementById(`${s.id}_duration`);
+    const start =
+      document.getElementById(s.id+"_start");
 
-    result[s.id] = {
-      name: s.name,
-      start: start ? start.value : "",
-      duration: duration ? duration.value.trim() : ""
+    const duration =
+      document.getElementById(s.id+"_duration");
+
+    output[s.id]={
+      name:s.name,
+      start:start ? start.value : "",
+      duration:duration ? duration.value.trim() : ""
     };
   });
 
-  return result;
+  return output;
 }
 
 
-function buildTodaySummary(result, payload) {
-  const lines = [
-    "RECOVERPATH AI — TODAY'S CHECK-IN SUMMARY",
+function fixedValue(id,fallback=5){
+
+  const item =
+    symptoms.find(x=>x.id===id);
+
+  return item
+    ? Number(item.value)
+    : fallback;
+}
+
+
+function comparisonValue(entry,symptom){
+
+  const raw =
+    Number(entry?.[symptom.id]);
+
+  if(Number.isNaN(raw)){
+    return null;
+  }
+
+  return raw;
+}
+
+
+function getComparisonEntries(period){
+
+  if(!statusData || !statusData.entries?.length){
+    return [null,null];
+  }
+
+  const entries =
+    statusData.entries;
+
+  const latest =
+    entries[entries.length-1];
+
+  let offset=1;
+
+  if(period==="weekly"){
+    offset=7;
+  }
+
+  if(period==="monthly"){
+    offset=30;
+  }
+
+  const index =
+    Math.max(0,entries.length-1-offset);
+
+  return [
+    entries[index],
+    latest
+  ];
+}
+
+
+function renderPatternComparison(){
+
+  if(!statusData) return;
+
+  const [previous,latest] =
+    getComparisonEntries(patternPeriod);
+
+  const improved=[];
+  const worsened=[];
+  const stable=[];
+
+  if(!previous || !latest){
+
+    improved.push("Not enough data yet.");
+    worsened.push("Not enough data yet.");
+    stable.push("Not enough data yet.");
+
+  }else{
+
+    defaultSymptoms.forEach(symptom=>{
+
+      const before =
+        comparisonValue(previous,symptom);
+
+      const now =
+        comparisonValue(latest,symptom);
+
+      if(before===null || now===null){
+        return;
+      }
+
+      const change =
+        now-before;
+
+      if(change===0){
+        stable.push(
+          `${symptom.name}: ${now}/10`
+        );
+        return;
+      }
+
+      const isImprovement =
+        symptom.direction==="better"
+          ? change>0
+          : change<0;
+
+      const amount =
+        Math.abs(change);
+
+      const text =
+        `${symptom.name}: ${
+          isImprovement ? "improved" : "worsened"
+        } by ${amount} point${amount===1 ? "" : "s"}`;
+
+      if(isImprovement){
+        improved.push(text);
+      }else{
+        worsened.push(text);
+      }
+    });
+  }
+
+  document.getElementById("improvedList").innerHTML =
+    improved.length
+      ? improved.map(x=>`<li>${escapeHTML(x)}</li>`).join("")
+      : "<li>No clear improvements in this comparison.</li>";
+
+  document.getElementById("worsenedList").innerHTML =
+    worsened.length
+      ? worsened.map(x=>`<li>${escapeHTML(x)}</li>`).join("")
+      : "<li>No clear worsening in this comparison.</li>";
+
+  document.getElementById("stableList").innerHTML =
+    stable.length
+      ? stable.map(x=>`<li>${escapeHTML(x)}</li>`).join("")
+      : "<li>No unchanged indicators in this comparison.</li>";
+
+  const descriptions={
+    daily:
+      "Comparing the latest check-in with the previous check-in.",
+    weekly:
+      "Comparing the latest check-in with approximately seven entries earlier.",
+    monthly:
+      "Comparing the latest check-in with approximately thirty entries earlier."
+  };
+
+  document.getElementById("periodDescription").textContent =
+    descriptions[patternPeriod];
+}
+
+
+document.querySelectorAll("[data-period]").forEach(button=>{
+
+  button.onclick=()=>{
+
+    patternPeriod =
+      button.dataset.period;
+
+    document.querySelectorAll("[data-period]").forEach(x=>
+      x.classList.remove("active")
+    );
+
+    button.classList.add("active");
+
+    renderPatternComparison();
+  };
+});
+
+
+function timelineEntries(){
+
+  if(!statusData){
+    return [];
+  }
+
+  const entries =
+    statusData.entries || [];
+
+  if(timelineRange==="all"){
+    return entries;
+  }
+
+  return entries.slice(
+    -Number(timelineRange)
+  );
+}
+
+
+function renderTimeline(){
+
+  const entries =
+    timelineEntries();
+
+  if(chartInstance){
+    chartInstance.destroy();
+  }
+
+  chartInstance =
+    new Chart(
+      document.getElementById("chart"),
+      {
+        type:"line",
+
+        data:{
+          labels:
+            entries.map(x=>"Day "+x.day),
+
+          datasets:[{
+            label:"Overall symptom burden",
+            data:
+              entries.map(x=>x.burden_score),
+            borderWidth:3,
+            tension:.25,
+            pointRadius:4
+          }]
+        },
+
+        options:{
+          plugins:{
+            legend:{
+              display:true
+            }
+          },
+
+          scales:{
+            y:{
+              min:0,
+              max:10,
+              title:{
+                display:true,
+                text:"Calculated symptom burden"
+              }
+            }
+          }
+        }
+      }
+    );
+
+  const meaning =
+    document.getElementById("timelineMeaning");
+
+  if(entries.length<2){
+
+    meaning.textContent =
+      "More check-ins are needed to show a trend.";
+
+    return;
+  }
+
+  const first =
+    entries[0].burden_score;
+
+  const last =
+    entries[entries.length-1].burden_score;
+
+  const difference =
+    Math.round((last-first)*100)/100;
+
+  if(difference<0){
+
+    meaning.textContent =
+      `Across this view, calculated symptom burden decreased by ${
+        Math.abs(difference)
+      } points.`;
+
+  }else if(difference>0){
+
+    meaning.textContent =
+      `Across this view, calculated symptom burden increased by ${
+        difference
+      } points.`;
+
+  }else{
+
+    meaning.textContent =
+      "Across this view, calculated symptom burden remained stable.";
+  }
+}
+
+
+document.querySelectorAll("[data-range]").forEach(button=>{
+
+  button.onclick=()=>{
+
+    timelineRange =
+      button.dataset.range;
+
+    document.querySelectorAll("[data-range]").forEach(x=>
+      x.classList.remove("active")
+    );
+
+    button.classList.add("active");
+
+    renderTimeline();
+  };
+});
+
+
+function getRoutines(){
+
+  return JSON.parse(
+    localStorage.getItem("recoverpath_routines") || "[]"
+  );
+}
+
+
+function saveRoutines(items){
+
+  localStorage.setItem(
+    "recoverpath_routines",
+    JSON.stringify(items)
+  );
+}
+
+
+function renderRoutines(){
+
+  const list =
+    document.getElementById("routineList");
+
+  const routines =
+    getRoutines();
+
+  if(!routines.length){
+
+    list.innerHTML = `
+      <p class="muted">
+        No routine reminders yet. Add meals, hydration,
+        rest, gentle activity, screen breaks, sleep,
+        or another personal routine.
+      </p>
+    `;
+
+    return;
+  }
+
+  list.innerHTML =
+    routines
+      .sort((a,b)=>
+        String(a.time).localeCompare(String(b.time))
+      )
+      .map((item,index)=>`
+
+        <div class="routine-item">
+
+          <div class="routine-item-head">
+
+            <div>
+              <b>${escapeHTML(item.name)}</b>
+              <div class="muted">
+                ${item.time
+                  ? escapeHTML(item.time)
+                  : "No time selected"
+                }
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onclick="deleteRoutine(${index})"
+            >
+              ×
+            </button>
+
+          </div>
+
+        </div>
+
+      `).join("");
+}
+
+
+function deleteRoutine(index){
+
+  const routines =
+    getRoutines();
+
+  routines.splice(index,1);
+
+  saveRoutines(routines);
+  renderRoutines();
+}
+
+
+document.getElementById("addRoutine").onclick = ()=>{
+
+  const name =
+    document.getElementById("routineName").value.trim();
+
+  const time =
+    document.getElementById("routineTime").value;
+
+  if(!name){
+    alert("Enter a routine item first.");
+    return;
+  }
+
+  const routines =
+    getRoutines();
+
+  routines.push({
+    name,
+    time
+  });
+
+  saveRoutines(routines);
+
+  document.getElementById("routineName").value="";
+  document.getElementById("routineTime").value="";
+
+  renderRoutines();
+};
+
+
+function saveReminder(){
+
+  const time =
+    document.getElementById("reminderTime").value;
+
+  if(!time) return;
+
+  localStorage.setItem(
+    "recoverpath_reminder_time",
+    time
+  );
+
+  document.getElementById("reminderStatus").textContent =
+    `Daily in-app reminder set for ${time}.`;
+
+  if(
+    "Notification" in window &&
+    Notification.permission==="default"
+  ){
+    Notification.requestPermission();
+  }
+}
+
+
+document.getElementById("saveReminder").onclick =
+  saveReminder;
+
+
+function loadReminder(){
+
+  const saved =
+    localStorage.getItem("recoverpath_reminder_time");
+
+  if(saved){
+
+    document.getElementById("reminderTime").value =
+      saved;
+
+    document.getElementById("reminderStatus").textContent =
+      `Daily in-app reminder set for ${saved}.`;
+  }
+}
+
+
+function checkReminder(){
+
+  const saved =
+    localStorage.getItem("recoverpath_reminder_time");
+
+  if(!saved) return;
+
+  const now =
+    new Date();
+
+  const current =
+    String(now.getHours()).padStart(2,"0")
+    + ":"
+    + String(now.getMinutes()).padStart(2,"0");
+
+  const dateKey =
+    now.toISOString().split("T")[0];
+
+  const shown =
+    localStorage.getItem(
+      "recoverpath_reminder_shown"
+    );
+
+  if(current>=saved && shown!==dateKey){
+
+    document.getElementById(
+      "reminderBackdrop"
+    ).classList.add("show");
+
+    localStorage.setItem(
+      "recoverpath_reminder_shown",
+      dateKey
+    );
+
+    if(
+      "Notification" in window &&
+      Notification.permission==="granted"
+    ){
+      new Notification(
+        "RecoverPath Daily Check-in",
+        {
+          body:"It's time to complete today's recovery check-in."
+        }
+      );
+    }
+  }
+}
+
+
+document.getElementById("startCheckin").onclick = ()=>{
+
+  document.getElementById(
+    "reminderBackdrop"
+  ).classList.remove("show");
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+};
+
+
+document.getElementById("dismissReminder").onclick = ()=>{
+
+  document.getElementById(
+    "reminderBackdrop"
+  ).classList.remove("show");
+};
+
+
+function buildAnalysis(result,payload){
+
+  const lines=[
+    "RECOVERPATH AI — DAILY RECOVERY REVIEW",
     "",
-    `Check-in date: ${payload.checkin_date || "Not provided"}`,
-    `Recovery pattern: ${result.pattern.replaceAll("_", " ")}`,
-    `Symptom burden: ${result.burden_score}/10`,
+    `Date: ${payload.checkin_date}`,
+    `Recovery pattern: ${String(result.pattern).replaceAll("_"," ")}`,
+    `Calculated symptom burden: ${result.burden_score}/10`,
     "",
-    "TODAY'S TRACKED INDICATORS"
+    "TODAY'S SYMPTOMS"
   ];
 
-  symptoms.forEach(s => {
-    const duration = payload.symptom_durations[s.id];
+  symptoms.forEach(s=>{
+
+    const details =
+      payload.symptom_durations[s.id] || {};
 
     lines.push(
-      `${s.name}: ${s.value}/10` +
-      (duration?.duration ? ` — ${duration.duration}` : "") +
-      (duration?.start ? ` — started ${duration.start}` : "")
+      `${s.name}: ${s.value}/10`
+      + (
+        details.start
+          ? ` • started ${details.start}`
+          : ""
+      )
+      + (
+        details.duration
+          ? ` • duration ${details.duration}`
+          : ""
+      )
     );
   });
 
-  if (savedNotes.length) {
-    lines.push("", "NOTES / POSSIBLE TRIGGERS");
 
-    savedNotes.forEach(item => {
+  if(savedNotes.length){
+
+    lines.push(
+      "",
+      "NOTES / POSSIBLE TRIGGERS"
+    );
+
+    savedNotes.forEach(item=>{
+
       lines.push(
-        `- ${item.text}` +
-        (item.duration ? ` — ${item.duration}` : "") +
-        (item.start ? ` — started ${item.start}` : "")
+        `• ${item.text}`
+        + (
+          item.duration
+            ? ` • ${item.duration}`
+            : ""
+        )
+        + (
+          item.start
+            ? ` • started ${item.start}`
+            : ""
+        )
       );
     });
   }
 
-  lines.push("", "SAFETY");
 
-  if (result.safety.urgent) {
-    lines.push(result.safety.message);
-  } else {
+  if(payload.safety_notes){
+
     lines.push(
-      "No urgent warning was triggered by this check-in. " +
-      "This does not guarantee that symptoms are medically safe."
+      "",
+      "NEW OR WORSENING CHANGES",
+      payload.safety_notes
     );
   }
 
-  if (result.guidance && result.guidance.length) {
-    lines.push("", "NEXT CONSIDERATIONS");
-
-    result.guidance.forEach(item => {
-      lines.push(`- ${item}`);
-    });
-  }
 
   lines.push(
     "",
-    "This is a non-diagnostic summary based on self-reported information."
+    "RECOVERY CHANGE"
   );
+
+
+  if(statusData?.entries?.length){
+
+    const previous =
+      statusData.entries[
+        statusData.entries.length-1
+      ];
+
+    const improved=[];
+    const worsened=[];
+
+    defaultSymptoms.forEach(s=>{
+
+      const oldValue =
+        Number(previous?.[s.id]);
+
+      const newValue =
+        Number(payload[s.id]);
+
+      if(
+        Number.isNaN(oldValue) ||
+        Number.isNaN(newValue) ||
+        oldValue===newValue
+      ){
+        return;
+      }
+
+      const better =
+        s.direction==="better"
+          ? newValue>oldValue
+          : newValue<oldValue;
+
+      if(better){
+        improved.push(s.name);
+      }else{
+        worsened.push(s.name);
+      }
+    });
+
+
+    lines.push(
+      improved.length
+        ? `Improved: ${improved.join(", ")}`
+        : "Improved: No clear change detected."
+    );
+
+    lines.push(
+      worsened.length
+        ? `Worsened: ${worsened.join(", ")}`
+        : "Worsened: No clear change detected."
+    );
+
+  }else{
+
+    lines.push(
+      "More check-ins are needed for comparison."
+    );
+  }
+
+
+  lines.push(
+    "",
+    "FOLLOW-UP",
+    "Use your Today's Routine section to keep track of meals, hydration, rest, sleep, screen breaks, gentle activity, and other routines you choose to follow.",
+    "",
+    "RESPONSIBLE AI NOTICE",
+    "This analysis identifies patterns in self-reported information. It does not diagnose concussion, determine medical seriousness, or replace professional medical care."
+  );
+
 
   return lines.join("\n");
 }
 
 
-async function refresh() {
-  const d = await fetch("/api/status").then(r => r.json());
-  const e = d.latest;
+function showAnalysis(result,payload){
 
-  if (e) {
-    document.getElementById("pattern").textContent =
-      e.pattern.replaceAll("_", " ");
+  document.getElementById("analysisDate").textContent =
+    payload.checkin_date;
 
-    document.getElementById("burden").textContent =
-      e.burden_score;
+  document.getElementById("analysisSummary").textContent =
+    buildAnalysis(result,payload);
 
-    document.getElementById("headline").textContent =
-      e.headline;
 
-    document.getElementById("safety").innerHTML =
-      e.safety.urgent
-        ? `<div class="alert">
-             <b>${e.safety.title}</b>
-             <p>${e.safety.message}</p>
-           </div>`
-        : `<div class="safe">
-             <b>No urgent warning triggered by the latest entry.</b><br>
-             <small>
-               This does not guarantee symptoms are medically safe.
-             </small>
-           </div>`;
+  const safety =
+    document.getElementById("analysisSafety");
+
+
+  if(payload.urgent_change){
+
+    safety.innerHTML=`
+      <div class="alert">
+        <b>Safety notice</b>
+        <p>
+          You reported a sudden, severe, or significantly worsening
+          change. Do not rely on this AI analysis to determine whether
+          emergency care is needed. Seek appropriate medical evaluation.
+        </p>
+      </div>
+    `;
+
+  }else{
+
+    safety.innerHTML=`
+      <div class="safe">
+        <b>No severe-change checkbox was selected.</b><br>
+        <small>
+          This does not mean symptoms are medically safe.
+        </small>
+      </div>
+    `;
   }
 
-  document.getElementById("plan").innerHTML =
-    d.daily_plan.map(x => `
-      <div>
-        <b>${x[0]}</b>
-        <span>${x[1]}</span>
-      </div>
-    `).join("");
 
-  document.getElementById("insights").innerHTML =
-    d.insights.map(x => `<li>${x}</li>`).join("");
-
-  document.getElementById("summary").textContent =
-    d.clinician_summary;
-
-  if (ch) ch.destroy();
-
-  ch = new Chart(
-    document.getElementById("chart"),
-    {
-      type: "line",
-      data: {
-        labels: d.entries.map(x => "Day " + x.day),
-        datasets: [{
-          data: d.entries.map(x => x.burden_score),
-          borderWidth: 3,
-          tension: .25
-        }]
-      },
-      options: {
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          y: {
-            min: 0,
-            max: 10,
-            title: {
-              display: true,
-              text: "Lower is better"
-            }
-          }
-        }
-      }
-    }
-  );
+  document.getElementById(
+    "analysisBackdrop"
+  ).classList.add("show");
 }
 
 
-document.getElementById("analyze").onclick = async () => {
+document.getElementById("closeAnalysis").onclick =
+document.getElementById("doneAnalysis").onclick =
+()=>{
 
-  const payload = {
-    checkin_date: checkinDate.value,
+  document.getElementById(
+    "analysisBackdrop"
+  ).classList.remove("show");
+};
 
-    headache: getFixedValue("headache"),
-    dizziness: getFixedValue("dizziness"),
-    sleep: getFixedValue("sleep"),
-    screen_tolerance: getFixedValue("screen_tolerance"),
-    concentration: getFixedValue("concentration"),
-    activity: getFixedValue("activity"),
 
-    tracked_symptoms: symptoms.map(s => ({
-      id: s.id,
-      name: s.name,
-      value: s.value,
-      direction: s.direction
-    })),
+document.getElementById("copyAnalysis").onclick = ()=>{
 
-    symptom_durations: collectDurations(),
+  navigator.clipboard.writeText(
+    document.getElementById(
+      "analysisSummary"
+    ).textContent
+  );
+};
 
-    saved_notes: savedNotes,
 
-    notes: savedNotes.map(x => x.text).join("; "),
+document.getElementById("analyze").onclick =
+async()=>{
 
-    red_flags: [
-      ...document.querySelectorAll("#flags input:checked")
-    ].map(x => x.value)
+  const payload={
+
+    checkin_date:
+      document.getElementById("checkin_date").value,
+
+    headache:
+      fixedValue("headache"),
+
+    dizziness:
+      fixedValue("dizziness"),
+
+    sleep:
+      fixedValue("sleep"),
+
+    screen_tolerance:
+      fixedValue("screen_tolerance"),
+
+    concentration:
+      fixedValue("concentration"),
+
+    activity:
+      fixedValue("activity"),
+
+    notes:
+      savedNotes.map(x=>x.text).join("; "),
+
+    saved_notes:
+      savedNotes,
+
+    tracked_symptoms:
+      symptoms.map(s=>({
+        id:s.id,
+        name:s.name,
+        value:s.value,
+        direction:s.direction
+      })),
+
+    symptom_durations:
+      collectDurations(),
+
+    safety_notes:
+      document.getElementById("safety_notes").value.trim(),
+
+    urgent_change:
+      document.getElementById("urgent_change").checked,
+
+    red_flags:
+      document.getElementById("urgent_change").checked
+        ? ["reported_significant_worsening"]
+        : []
   };
 
-  const response = await fetch(
-    "/api/entry",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    }
-  );
 
-  if (!response.ok) {
-    document.getElementById("todaySummary").textContent =
-      "The check-in could not be analyzed.";
+  const response =
+    await fetch(
+      "/api/entry",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify(payload)
+      }
+    );
+
+
+  if(!response.ok){
+
+    alert(
+      "RecoverPath could not analyze this check-in."
+    );
+
     return;
   }
 
-  const result = await response.json();
 
-  document.getElementById("todaySummary").textContent =
-    buildTodaySummary(result, payload);
+  const result =
+    await response.json();
+
+
+  showAnalysis(
+    result,
+    payload
+  );
+
 
   await refresh();
 };
 
 
-document.getElementById("demo").onclick = () => {
+document.getElementById("demo").onclick = ()=>{
 
-  const demoValues = {
-    headache: 8,
-    dizziness: 7,
-    sleep: 3,
-    screen_tolerance: 2,
-    concentration: 8,
-    activity: 2
+  const demo={
+    headache:8,
+    dizziness:7,
+    sleep:3,
+    screen_tolerance:2,
+    concentration:8,
+    activity:2
   };
 
-  symptoms.forEach(s => {
-    if (demoValues[s.id] !== undefined) {
-      s.value = demoValues[s.id];
+
+  symptoms.forEach(s=>{
+
+    if(demo[s.id]!==undefined){
+      s.value=demo[s.id];
     }
   });
 
-  savedNotes = [{
-    text: "Symptoms flared after a long screen session.",
-    start: today,
-    duration: "Several hours"
+
+  savedNotes=[{
+    text:"Symptoms increased after a long screen session.",
+    start:today,
+    duration:"Several hours"
   }];
 
+
+  saveSymptoms();
   renderSymptoms();
   renderNotes();
 };
 
 
-document.getElementById("copyToday").onclick = () =>
-  navigator.clipboard.writeText(
-    document.getElementById("todaySummary").textContent
-  );
+async function refresh(){
+
+  statusData =
+    await fetch("/api/status")
+      .then(r=>r.json());
 
 
-document.getElementById("copy").onclick = () =>
+  const latest =
+    statusData.latest;
+
+
+  if(latest){
+
+    document.getElementById("pattern").textContent =
+      String(latest.pattern)
+        .replaceAll("_"," ");
+
+    document.getElementById("burden").textContent =
+      latest.burden_score;
+
+    document.getElementById("headline").textContent =
+      latest.headline;
+
+
+    document.getElementById("safety").innerHTML =
+      latest.safety?.urgent
+        ? `
+          <div class="alert">
+            <b>${escapeHTML(latest.safety.title)}</b>
+            <p>${escapeHTML(latest.safety.message)}</p>
+          </div>
+        `
+        : "";
+  }
+
+
+  document.getElementById("plan").innerHTML =
+    (statusData.daily_plan || [])
+      .map(x=>`
+        <div>
+          <b>${escapeHTML(x[0])}</b>
+          <span>${escapeHTML(x[1])}</span>
+        </div>
+      `)
+      .join("");
+
+
+  document.getElementById("insights").innerHTML =
+    (statusData.insights || [])
+      .map(x=>`
+        <li>${escapeHTML(x)}</li>
+      `)
+      .join("");
+
+
+  document.getElementById("summary").textContent =
+    statusData.clinician_summary || "";
+
+
+  renderPatternComparison();
+  renderTimeline();
+}
+
+
+document.getElementById("copy").onclick = ()=>{
+
   navigator.clipboard.writeText(
     document.getElementById("summary").textContent
   );
+};
 
 
 renderSymptoms();
 renderNotes();
+renderRoutines();
+loadReminder();
+
 refresh();
+
+checkReminder();
+
+setInterval(
+  checkReminder,
+  30000
+);
 
 </script>
 
