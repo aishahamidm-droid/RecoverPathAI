@@ -245,6 +245,40 @@ details.ai-info summary{
 }
 .modal-actions button{width:auto!important}
 
+  .mode-switcher{
+  max-width:1200px;
+  margin:22px auto;
+  padding:18px 20px;
+  border:1px solid #dce5ea;
+  border-radius:16px;
+  background:#fff;
+  box-sizing:border-box;
+}
+
+.mode-switcher h2{
+  margin:4px 0 8px;
+}
+
+.mode-buttons{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:14px;
+}
+
+.mode-buttons button{
+  width:auto!important;
+  margin:0!important;
+  padding:10px 18px!important;
+  background:#edf3f6!important;
+  color:#31434d!important;
+}
+
+.mode-buttons button.active{
+  background:#197ca3!important;
+  color:#fff!important;
+}
+
 @media(max-width:750px){
   .field-grid,.change-grid,.routine-form,.add-row,.med-row,.test-row{
     grid-template-columns:1fr;
@@ -266,6 +300,32 @@ and keep clearer records for medical appointments.
 </div>
 <b>Privacy-first prototype</b>
 </header>
+
+<section class="mode-switcher">
+  <div>
+    <small>CHOOSE EXPERIENCE</small>
+    <h2 id="modeTitle">Start My Recovery</h2>
+    <p id="modeDescription">
+      Use RecoverPath with your own recovery information. Your personal
+      history stays separate from the demonstration.
+    </p>
+  </div>
+
+  <div class="mode-buttons">
+    <button type="button" id="realModeButton" class="active">
+      My Recovery
+    </button>
+
+    <button type="button" id="demoModeButton">
+      Explore Demo
+    </button>
+  </div>
+
+  <p id="modeNotice" class="muted">
+    My Recovery starts with your own information. Demo mode uses fictional
+    example data and does not mix with your personal recovery history.
+  </p>
+</section>
 
 <main>
 
@@ -491,6 +551,60 @@ your recorded check-ins.
 
 </section>
 
+  <section class="card">
+
+<small>RECOVERY HISTORY</small>
+<h2>Recovery History Report</h2>
+
+<p>
+Choose a date to view the recovery information saved for that day.
+</p>
+
+<div class="field-grid">
+
+<label>
+Day
+<select id="historyDay">
+<option value="">Day</option>
+</select>
+</label>
+
+<label>
+Month
+<select id="historyMonth">
+<option value="">Month</option>
+<option value="01">January</option>
+<option value="02">February</option>
+<option value="03">March</option>
+<option value="04">April</option>
+<option value="05">May</option>
+<option value="06">June</option>
+<option value="07">July</option>
+<option value="08">August</option>
+<option value="09">September</option>
+<option value="10">October</option>
+<option value="11">November</option>
+<option value="12">December</option>
+</select>
+</label>
+
+</div>
+
+<label class="full-field" style="margin-top:10px">
+Year
+<select id="historyYear">
+<option value="">Year</option>
+</select>
+</label>
+
+<button type="button" id="generateHistoryReport">
+Generate Recovery Report
+</button>
+
+<div id="historyReport" style="margin-top:18px"></div>
+
+</section>
+
 
 <section class="card">
 
@@ -705,7 +819,33 @@ const coreSymptoms=[
   {id:"activity",name:"Activity tolerance",direction:"better",value:5}
 ];
 
-const HISTORY_KEY="recoverpath_checkin_history";
+let currentMode="real";
+
+const STORAGE_KEYS={
+  real:{
+    history:"recoverpath_real_checkin_history",
+    symptoms:"recoverpath_real_symptoms",
+    routines:"recoverpath_real_routines",
+    visits:"recoverpath_real_doctor_visits",
+    reminder:"recoverpath_real_reminder_time",
+    reminderCompleted:"recoverpath_real_reminder_completed",
+    reminderSnooze:"recoverpath_real_reminder_snooze_until"
+  },
+
+  demo:{
+    history:"recoverpath_demo_checkin_history",
+    symptoms:"recoverpath_demo_symptoms",
+    routines:"recoverpath_demo_routines",
+    visits:"recoverpath_demo_doctor_visits",
+    reminder:"recoverpath_demo_reminder_time",
+    reminderCompleted:"recoverpath_demo_reminder_completed",
+    reminderSnooze:"recoverpath_demo_reminder_snooze_until"
+  }
+};
+
+function storageKey(name){
+  return STORAGE_KEYS[currentMode][name];
+}
 
 
 function todayISO(){
@@ -722,7 +862,7 @@ function loadSymptoms(){
 
   try{
     const parsed=JSON.parse(
-      localStorage.getItem("recoverpath_symptoms") || "[]"
+      localStorage.getItem(storageKey("symptoms")) || "[]"
     );
 
     if(Array.isArray(parsed)){
@@ -845,7 +985,7 @@ function calculateDuration(startValue,endValue=todayISO()){
 
 function saveSymptoms(){
   localStorage.setItem(
-    "recoverpath_symptoms",
+    storageKey("symptoms"),
     JSON.stringify(symptoms)
   );
 }
@@ -1121,7 +1261,7 @@ function fixedValue(id){
 function getLocalHistory(){
   try{
     const value=JSON.parse(
-      localStorage.getItem(HISTORY_KEY) || "[]"
+      localStorage.getItem(storageKey("history")) || "[]"
     );
 
     return Array.isArray(value) ? value : [];
@@ -1133,7 +1273,7 @@ function getLocalHistory(){
 
 function saveLocalHistory(items){
   localStorage.setItem(
-    HISTORY_KEY,
+    storageKey("history"),
     JSON.stringify(items)
   );
 }
@@ -1243,7 +1383,7 @@ function getRoutines(){
 
   try{
     const parsed=JSON.parse(
-      localStorage.getItem("recoverpath_routines") || "[]"
+      localStorage.getItem(storageKey("routines")) || "[]"
     );
 
     if(Array.isArray(parsed)){
@@ -1278,7 +1418,7 @@ function getRoutines(){
 
 function saveRoutines(items){
   localStorage.setItem(
-    "recoverpath_routines",
+    storageKey("routines"),
     JSON.stringify(items)
   );
 }
@@ -1361,13 +1501,180 @@ addRoutine.onclick=()=>{
   renderRoutines();
 };
 
+  /* RECOVERY HISTORY REPORT */
+
+function populateHistoryDateSelectors(){
+  historyDay.innerHTML=
+    '<option value="">Day</option>';
+
+  for(let day=1;day<=31;day++){
+    const value=String(day).padStart(2,"0");
+
+    historyDay.innerHTML+=
+      `<option value="${value}">${day}</option>`;
+  }
+
+  const currentYear=new Date().getFullYear();
+
+  historyYear.innerHTML=
+    '<option value="">Year</option>';
+
+  for(let year=currentYear;year>=currentYear-10;year--){
+    historyYear.innerHTML+=
+      `<option value="${year}">${year}</option>`;
+  }
+}
+
+
+function symptomNameForReport(id,entry){
+  const tracked=(entry.tracked_symptoms || [])
+    .find(item=>item.id===id);
+
+  if(tracked?.name){
+    return tracked.name;
+  }
+
+  const core=coreSymptoms.find(item=>item.id===id);
+
+  return core?.name || id.replaceAll("_"," ");
+}
+
+
+function buildRecoveryHistoryReport(entry){
+  const tracked=Array.isArray(entry.tracked_symptoms)
+    ? entry.tracked_symptoms
+    : [];
+
+  const symptomLines=tracked.length
+    ? tracked.map(item=>`
+        <div class="saved-item">
+          <b>${escapeHTML(item.name)}</b>
+          <span>${escapeHTML(item.value)}/10</span>
+        </div>
+      `).join("")
+    : coreSymptoms
+      .filter(item=>
+        entry[item.id]!==null &&
+        entry[item.id]!==undefined
+      )
+      .map(item=>`
+        <div class="saved-item">
+          <b>${escapeHTML(item.name)}</b>
+          <span>${escapeHTML(entry[item.id])}/10</span>
+        </div>
+      `).join("");
+
+  const notes=Array.isArray(entry.saved_notes)
+    ? entry.saved_notes
+    : [];
+
+  const notesHTML=notes.length
+    ? notes.map(item=>`
+        <div class="saved-item">
+          <b>${escapeHTML(item.text)}</b>
+          ${
+            item.start
+            ? `<span>Started: ${escapeHTML(item.start)}</span>`
+            : ""
+          }
+        </div>
+      `).join("")
+    : entry.notes
+      ? `<p>${escapeHTML(entry.notes)}</p>`
+      : `<p class="muted">No notes were saved for this date.</p>`;
+
+  return `
+    <div class="subform">
+
+      <small>RECOVERY HISTORY REPORT</small>
+      <h3>${escapeHTML(entry.checkin_date)}</h3>
+
+      <p class="muted">
+        This report contains information saved in RecoverPath for the
+        selected date. It is a recovery record, not a medical diagnosis.
+      </p>
+
+      <div class="visit-section">
+        <h4>Symptoms & recovery indicators</h4>
+        ${symptomLines || '<p class="muted">No symptom information recorded.</p>'}
+      </div>
+
+      <div class="visit-section">
+        <h4>Notes / Possible Triggers</h4>
+        ${notesHTML}
+      </div>
+
+      ${
+        entry.safety_notes
+        ? `
+          <div class="visit-section">
+            <h4>Reported change</h4>
+            <p>${escapeHTML(entry.safety_notes)}</p>
+          </div>
+        `
+        : ""
+      }
+
+      <div class="visit-section">
+        <h4>Safety information</h4>
+        <p>
+          ${
+            entry.urgent_change
+            ? "A sudden, severe, or significantly worsening change was reported on this date."
+            : "No sudden, severe, or significantly worsening change was marked in this check-in."
+          }
+        </p>
+      </div>
+
+    </div>
+  `;
+}
+
+
+generateHistoryReport.onclick=()=>{
+  const day=historyDay.value;
+  const month=historyMonth.value;
+  const year=historyYear.value;
+
+  if(!day || !month || !year){
+    alert("Choose the day, month, and year.");
+    return;
+  }
+
+  const selectedDate=`${year}-${month}-${day}`;
+
+  const history=getLocalHistory();
+
+  const entry=history.find(
+    item=>item.checkin_date===selectedDate
+  );
+
+  if(!entry){
+    historyReport.innerHTML=`
+      <div class="subform">
+        <h3>No recovery record found</h3>
+        <p class="muted">
+          There is no saved check-in for
+          ${escapeHTML(selectedDate)} in the current
+          ${currentMode==="demo" ? "Demo" : "My Recovery"} profile.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+  historyReport.innerHTML=
+    buildRecoveryHistoryReport(entry);
+};
+
 
 /* DOCTOR VISITS */
 
 function getVisits(){
   try{
     const visits=JSON.parse(
-      localStorage.getItem("recoverpath_doctor_visits") || "[]"
+      localStorage.getItem(storageKey("visits")) || "[]"
     );
 
     return Array.isArray(visits) ? visits : [];
@@ -1379,7 +1686,7 @@ function getVisits(){
 
 function saveVisits(visits){
   localStorage.setItem(
-    "recoverpath_doctor_visits",
+    storageKey("visits"),
     JSON.stringify(visits)
   );
 }
@@ -1976,7 +2283,7 @@ document.querySelectorAll("[data-range]")
 
 function loadReminder(){
   const saved=
-  localStorage.getItem("recoverpath_reminder_time");
+  localStorage.getItem(storageKey("reminder"))
 
   if(saved){
     reminderTime.value=saved;
@@ -1991,9 +2298,9 @@ saveReminder.onclick=()=>{
   if(!reminderTime.value) return;
 
   localStorage.setItem(
-    "recoverpath_reminder_time",
-    reminderTime.value
-  );
+  storageKey("reminder"),
+  reminderTime.value
+);
 
   reminderStatus.textContent=
   `Daily in-app reminder set for ${reminderTime.value}. Keep RecoverPath open for this prototype reminder.`;
@@ -2315,6 +2622,405 @@ analyze.onclick=async()=>{
   }
 };
 
+  /* REAL / DEMO MODE SWITCHING */
+
+function loadCurrentModeData(){
+  symptoms=loadSymptoms();
+  savedNotes=[];
+
+  checkin_date.value=todayISO();
+  trigger_start.value=todayISO();
+  safety_notes.value="";
+  urgent_change.checked=false;
+  urgentHelp.innerHTML="";
+
+  renderSymptoms();
+  renderNotes();
+  renderRoutines();
+  renderVisitHistory();
+
+  analyzeStoredHistory();
+}
+
+
+function setMode(mode){
+  if(mode!=="real" && mode!=="demo"){
+    return;
+  }
+
+  currentMode=mode;
+
+  realModeButton.classList.toggle(
+    "active",
+    currentMode==="real"
+  );
+
+  demoModeButton.classList.toggle(
+    "active",
+    currentMode==="demo"
+  );
+
+  if(currentMode==="real"){
+    modeTitle.textContent="My Recovery";
+
+    modeDescription.textContent=
+      "Use RecoverPath with your own recovery information. Your personal history stays separate from the demonstration.";
+
+    modeNotice.textContent=
+      "You are viewing My Recovery. Information saved here is not mixed with the fictional demo profile.";
+
+  }else{
+    modeTitle.textContent="Explore Demo";
+
+    modeDescription.textContent=
+      "Explore a fictional concussion recovery journey with example check-ins, routines, medical visits, patterns, and recovery history.";
+
+    modeNotice.textContent=
+      "Demo mode contains fictional example information only. Changes made here do not alter My Recovery.";
+  }
+
+  loadCurrentModeData();
+}
+
+
+realModeButton.onclick=()=>{
+  setMode("real");
+};
+
+
+function createDemoData(){
+  /*
+  Fictional demonstration data only.
+  This data is stored exclusively in the Demo namespace.
+  */
+
+  const demoHistory=[
+    {
+      checkin_date:"2026-08-20",
+      headache:8,
+      dizziness:7,
+      sleep:3,
+      screen_tolerance:2,
+      concentration:8,
+      activity:2,
+      notes:"Headache and dizziness increased after screen use. Needed several breaks during the afternoon.",
+      saved_notes:[
+        {
+          text:"Symptoms increased after about 25 minutes of screen use.",
+          start:"2026-08-20"
+        }
+      ],
+      tracked_symptoms:[
+        {id:"headache",name:"Headache severity",value:8,direction:"worse"},
+        {id:"dizziness",name:"Dizziness",value:7,direction:"worse"},
+        {id:"sleep",name:"Sleep quality",value:3,direction:"better"},
+        {id:"screen_tolerance",name:"Screen tolerance",value:2,direction:"better"},
+        {id:"concentration",name:"Concentration difficulty",value:8,direction:"worse"},
+        {id:"activity",name:"Activity tolerance",value:2,direction:"better"}
+      ],
+      symptom_durations:{},
+      safety_notes:"",
+      urgent_change:false,
+      red_flags:[]
+    },
+
+    {
+      checkin_date:"2026-08-23",
+      headache:7,
+      dizziness:6,
+      sleep:4,
+      screen_tolerance:3,
+      concentration:7,
+      activity:3,
+      notes:"Slept better. Short screen sessions were easier but reading still increased headache.",
+      saved_notes:[
+        {
+          text:"Reading on a laptop for more than 30 minutes increased headache.",
+          start:"2026-08-23"
+        }
+      ],
+      tracked_symptoms:[
+        {id:"headache",name:"Headache severity",value:7,direction:"worse"},
+        {id:"dizziness",name:"Dizziness",value:6,direction:"worse"},
+        {id:"sleep",name:"Sleep quality",value:4,direction:"better"},
+        {id:"screen_tolerance",name:"Screen tolerance",value:3,direction:"better"},
+        {id:"concentration",name:"Concentration difficulty",value:7,direction:"worse"},
+        {id:"activity",name:"Activity tolerance",value:3,direction:"better"}
+      ],
+      symptom_durations:{},
+      safety_notes:"",
+      urgent_change:false,
+      red_flags:[]
+    },
+
+    {
+      checkin_date:"2026-08-27",
+      headache:5,
+      dizziness:4,
+      sleep:6,
+      screen_tolerance:5,
+      concentration:5,
+      activity:5,
+      notes:"Felt better after good sleep. Managed a short walk and two short computer sessions.",
+      saved_notes:[
+        {
+          text:"Good sleep appeared to be followed by an easier morning.",
+          start:"2026-08-27"
+        }
+      ],
+      tracked_symptoms:[
+        {id:"headache",name:"Headache severity",value:5,direction:"worse"},
+        {id:"dizziness",name:"Dizziness",value:4,direction:"worse"},
+        {id:"sleep",name:"Sleep quality",value:6,direction:"better"},
+        {id:"screen_tolerance",name:"Screen tolerance",value:5,direction:"better"},
+        {id:"concentration",name:"Concentration difficulty",value:5,direction:"worse"},
+        {id:"activity",name:"Activity tolerance",value:5,direction:"better"}
+      ],
+      symptom_durations:{},
+      safety_notes:"",
+      urgent_change:false,
+      red_flags:[]
+    },
+
+    {
+      checkin_date:"2026-08-30",
+      headache:6,
+      dizziness:5,
+      sleep:4,
+      screen_tolerance:4,
+      concentration:6,
+      activity:4,
+      notes:"Poor sleep last night. Headache returned after a long video call and a busy afternoon.",
+      saved_notes:[
+        {
+          text:"Poor sleep and prolonged screen exposure preceded today's symptom increase.",
+          start:"2026-08-30"
+        }
+      ],
+      tracked_symptoms:[
+        {id:"headache",name:"Headache severity",value:6,direction:"worse"},
+        {id:"dizziness",name:"Dizziness",value:5,direction:"worse"},
+        {id:"sleep",name:"Sleep quality",value:4,direction:"better"},
+        {id:"screen_tolerance",name:"Screen tolerance",value:4,direction:"better"},
+        {id:"concentration",name:"Concentration difficulty",value:6,direction:"worse"},
+        {id:"activity",name:"Activity tolerance",value:4,direction:"better"}
+      ],
+      symptom_durations:{},
+      safety_notes:"",
+      urgent_change:false,
+      red_flags:[]
+    },
+
+    {
+      checkin_date:"2026-09-02",
+      headache:4,
+      dizziness:3,
+      sleep:7,
+      screen_tolerance:6,
+      concentration:4,
+      activity:6,
+      notes:"Better day. Took regular screen breaks and tolerated a longer walk without a major symptom increase.",
+      saved_notes:[
+        {
+          text:"Regular screen breaks made computer use easier today.",
+          start:"2026-09-02"
+        }
+      ],
+      tracked_symptoms:[
+        {id:"headache",name:"Headache severity",value:4,direction:"worse"},
+        {id:"dizziness",name:"Dizziness",value:3,direction:"worse"},
+        {id:"sleep",name:"Sleep quality",value:7,direction:"better"},
+        {id:"screen_tolerance",name:"Screen tolerance",value:6,direction:"better"},
+        {id:"concentration",name:"Concentration difficulty",value:4,direction:"worse"},
+        {id:"activity",name:"Activity tolerance",value:6,direction:"better"}
+      ],
+      symptom_durations:{},
+      safety_notes:"",
+      urgent_change:false,
+      red_flags:[]
+    },
+
+    {
+      checkin_date:"2026-09-04",
+      headache:3,
+      dizziness:2,
+      sleep:8,
+      screen_tolerance:7,
+      concentration:3,
+      activity:7,
+      notes:"Symptoms were milder today. Completed normal morning tasks with breaks and tolerated more screen time.",
+      saved_notes:[
+        {
+          text:"Screen tolerance continued to improve when breaks were taken regularly.",
+          start:"2026-09-04"
+        }
+      ],
+      tracked_symptoms:[
+        {id:"headache",name:"Headache severity",value:3,direction:"worse"},
+        {id:"dizziness",name:"Dizziness",value:2,direction:"worse"},
+        {id:"sleep",name:"Sleep quality",value:8,direction:"better"},
+        {id:"screen_tolerance",name:"Screen tolerance",value:7,direction:"better"},
+        {id:"concentration",name:"Concentration difficulty",value:3,direction:"worse"},
+        {id:"activity",name:"Activity tolerance",value:7,direction:"better"}
+      ],
+      symptom_durations:{},
+      safety_notes:"",
+      urgent_change:false,
+      red_flags:[]
+    }
+  ];
+
+  const demoSymptoms=[
+    {
+      id:"headache",
+      name:"Headache severity",
+      direction:"worse",
+      value:3,
+      custom:false,
+      startDate:"2026-08-18"
+    },
+    {
+      id:"dizziness",
+      name:"Dizziness",
+      direction:"worse",
+      value:2,
+      custom:false,
+      startDate:"2026-08-18"
+    },
+    {
+      id:"sleep",
+      name:"Sleep quality",
+      direction:"better",
+      value:8,
+      custom:false,
+      startDate:"2026-08-18"
+    },
+    {
+      id:"screen_tolerance",
+      name:"Screen tolerance",
+      direction:"better",
+      value:7,
+      custom:false,
+      startDate:"2026-08-18"
+    },
+    {
+      id:"concentration",
+      name:"Concentration difficulty",
+      direction:"worse",
+      value:3,
+      custom:false,
+      startDate:"2026-08-18"
+    },
+    {
+      id:"activity",
+      name:"Activity tolerance",
+      direction:"better",
+      value:7,
+      custom:false,
+      startDate:"2026-08-18"
+    },
+    {
+      id:"light_sensitivity",
+      name:"Light sensitivity",
+      direction:"worse",
+      value:2,
+      custom:true,
+      startDate:"2026-08-18"
+    }
+  ];
+
+  const demoRoutines=[
+    {
+      id:"demo_breakfast",
+      name:"Breakfast and hydration",
+      time:"08:00"
+    },
+    {
+      id:"demo_screen_break",
+      name:"Screen break",
+      time:"10:30"
+    },
+    {
+      id:"demo_walk",
+      name:"Gentle walk",
+      time:"15:00"
+    },
+    {
+      id:"demo_wind_down",
+      name:"Low-screen wind-down",
+      time:"21:00"
+    }
+  ];
+
+  const demoVisits=[
+    {
+      id:10001,
+      date:"2026-08-21",
+      doctor:"Dr. Maya Carter",
+      clinic:"Northside Sports Medicine",
+      reason:"Follow-up after concussion symptoms continued.",
+      doctor_said:"Continue monitoring symptoms and increase normal activity gradually as tolerated. Reduce activity if symptoms significantly worsen.",
+      tests:[
+        {
+          name:"Neurological examination",
+          result:"Recorded during visit",
+          note:"Follow-up recommended."
+        }
+      ],
+      medications:[],
+      recommendations:"Use regular breaks during screen work, maintain a consistent sleep routine, and continue gradual activity according to clinician guidance.",
+      followup_date:"2026-09-05",
+      followup_note:"Review recovery progress and activity tolerance.",
+      notes:"Fictional demonstration visit."
+    }
+  ];
+
+  localStorage.setItem(
+    STORAGE_KEYS.demo.history,
+    JSON.stringify(demoHistory)
+  );
+
+  localStorage.setItem(
+    STORAGE_KEYS.demo.symptoms,
+    JSON.stringify(demoSymptoms)
+  );
+
+  localStorage.setItem(
+    STORAGE_KEYS.demo.routines,
+    JSON.stringify(demoRoutines)
+  );
+
+  localStorage.setItem(
+    STORAGE_KEYS.demo.visits,
+    JSON.stringify(demoVisits)
+  );
+
+  localStorage.setItem(
+    "recoverpath_demo_initialized",
+    "true"
+  );
+}
+
+
+async function openDemoMode(){
+  if(
+    localStorage.getItem("recoverpath_demo_initialized")
+    !== "true"
+  ){
+    createDemoData();
+  }
+
+  setMode("demo");
+
+  checkin_date.value="2026-09-04";
+
+  await analyzeStoredHistory();
+}
+
+
+demoModeButton.onclick=()=>{
+  openDemoMode();
+};
 
 /* DEMO */
 
@@ -2395,19 +3101,15 @@ async function refresh(){
 
 /* INITIALIZE */
 
-saveSymptoms();
+setMode("real");
 
-renderSymptoms();
-renderNotes();
-renderRoutines();
+populateHistoryDateSelectors();
 
 renderTestInputs();
 renderMedicationInputs();
-renderVisitHistory();
 
 loadReminder();
 
-refresh();
 checkReminder();
 
 setInterval(
