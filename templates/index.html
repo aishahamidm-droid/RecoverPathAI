@@ -2316,7 +2316,7 @@ saveReminder.onclick=()=>{
 
 function checkReminder(){
   const saved=
-  localStorage.getItem("recoverpath_reminder_time");
+localStorage.getItem(storageKey("reminder"));
 
   if(!saved) return;
 
@@ -2330,13 +2330,13 @@ function checkReminder(){
   const day=todayISO();
 
   const snoozeUntil=Number(
-    localStorage.getItem("recoverpath_reminder_snooze_until") || "0"
-  );
+  localStorage.getItem(storageKey("reminderSnooze")) || "0"
+);
 
   if(Date.now()<snoozeUntil) return;
 
   const already=
-  localStorage.getItem("recoverpath_reminder_completed");
+localStorage.getItem(storageKey("reminderCompleted"));
 
   if(current>=saved && already!==day){
 
@@ -2360,10 +2360,10 @@ function checkReminder(){
 startCheckin.onclick=()=>{
   reminderBackdrop.classList.remove("show");
 
-  localStorage.setItem(
-    "recoverpath_reminder_snooze_until",
-    "0"
-  );
+localStorage.setItem(
+  storageKey("reminderSnooze"),
+  "0"
+);
 
   window.scrollTo({
     top:0,
@@ -2376,10 +2376,9 @@ dismissReminder.onclick=()=>{
   reminderBackdrop.classList.remove("show");
 
   localStorage.setItem(
-    "recoverpath_reminder_snooze_until",
-    String(Date.now()+(60*60*1000))
-  );
-};
+  storageKey("reminderSnooze"),
+  String(Date.now()+(60*60*1000))
+);
 
 
 /* ANALYSIS */
@@ -2599,10 +2598,9 @@ analyze.onclick=async()=>{
     showAnalysis(result,payload);
 
     localStorage.setItem(
-      "recoverpath_reminder_completed",
-      payload.checkin_date
-    );
-
+  storageKey("reminderCompleted"),
+  payload.checkin_date
+);
     savedNotes=[];
     renderNotes();
 
