@@ -1,21 +1,739 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>RecoverPath AI</title><link rel="stylesheet" href="/static/style.css"><script src="https://cdn.jsdelivr.net/npm/chart.js"></script></head><body>
-<header><div><small>RESPONSIBLE AI • CONCUSSION RECOVERY PROTOTYPE</small><h1>RecoverPath AI</h1><p>Track symptoms, spot recovery patterns, plan your day, and prepare clearer conversations with clinicians.</p></div><b>Privacy-first • Local demo</b></header>
-<main><section class="card form"><h2>Daily check-in</h2><p>Rate 0–10. Higher is worse for headache, dizziness and concentration difficulty. Higher is better for sleep, screen tolerance and activity.</p><div id="sliders"></div><label>Notes / possible triggers</label><textarea id="notes" placeholder="e.g. Long screen session, noisy room, poor sleep..."></textarea><h3>Emergency warning signs</h3><div id="flags"></div><button id="analyze">Analyze today's check-in</button><button class="secondary" id="demo">Load demo setback</button></section>
-<div class="stack"><section class="card"><small>TODAY'S PATTERN</small><div class="top"><h2 id="pattern">—</h2><strong id="burden">—</strong></div><p id="headline"></p><div id="safety"></div></section>
-<section class="card"><h2>Recovery timeline</h2><canvas id="chart"></canvas></section>
-<section class="card"><small>TODAY</small><h2>Daily Recovery Plan</h2><div id="plan" class="plan"></div></section>
-<section class="card"><small>YOUR DATA</small><h2>Pattern Insights</h2><ul id="insights"></ul></section>
-<section class="card"><small>FOR APPOINTMENTS</small><div class="top"><h2>Doctor Visit Summary</h2><button class="copy" id="copy">Copy</button></div><pre id="summary"></pre></section>
-<section class="card"><h2>Responsible AI guardrails</h2><div class="guards"><div><b>No diagnosis</b><span>Patterns, not diseases.</span></div><div><b>Safety overrides AI</b><span>Red flags use deterministic rules.</span></div><div><b>Transparent limits</b><span>ML uses synthetic demo data.</span></div><div><b>Minimal data</b><span>Entries live only in app memory.</span></div></div></section></div></main>
-<footer>Educational hackathon prototype — not a medical device and not a replacement for professional or emergency care.</footer>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>RecoverPath AI</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<header>
+  <div>
+    <small>RESPONSIBLE AI • CONCUSSION RECOVERY PROTOTYPE</small>
+    <h1>RecoverPath AI</h1>
+    <p>Track symptoms, understand recovery patterns, and prepare clearer information for your clinician.</p>
+  </div>
+  <b>Privacy-first prototype</b>
+</header>
+
+<main>
+
+<!-- DAILY CHECK-IN -->
+<section class="card form">
+  <small>TODAY</small>
+  <h2>Daily Check-in</h2>
+  <p>
+    Record what you are experiencing today. You can choose which symptoms
+    you want to track and record how long each symptom has been present.
+  </p>
+
+  <div class="checkin-date">
+    <label for="checkin_date"><b>Check-in date</b></label>
+    <input id="checkin_date" type="date">
+  </div>
+
+  <h3>Symptoms & recovery indicators</h3>
+
+  <div id="symptomList"></div>
+
+  <div class="add-symptom-box">
+    <label for="newSymptom"><b>Add another symptom</b></label>
+    <div class="inline-row">
+      <input
+        id="newSymptom"
+        type="text"
+        placeholder="e.g. Light sensitivity"
+      >
+      <button type="button" id="addSymptom">Add symptom</button>
+    </div>
+  </div>
+
+  <hr>
+
+  <h3>Notes / Possible Triggers</h3>
+  <p>
+    Add something that may have affected your symptoms, such as poor sleep,
+    screen exposure, exercise, noise, stress, or another possible trigger.
+  </p>
+
+  <textarea
+    id="notes"
+    placeholder="e.g. Poor sleep, long screen session, noisy room..."
+  ></textarea>
+
+  <div class="trigger-details">
+    <label for="trigger_start"><b>When did this start?</b></label>
+    <input id="trigger_start" type="date">
+
+    <label for="trigger_duration"><b>Duration</b></label>
+    <input
+      id="trigger_duration"
+      type="text"
+      placeholder="e.g. 3 days, 2 hours"
+    >
+  </div>
+
+  <button type="button" id="addNote">Add note / trigger</button>
+
+  <div class="saved-box">
+    <h4>Saved notes & possible triggers</h4>
+    <div id="savedNotes">
+      <p class="muted">No notes added for today's check-in yet.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <h3>Emergency warning signs</h3>
+  <p>
+    Select any warning signs being experienced now. Safety warnings are
+    evaluated separately from the AI recovery-pattern model.
+  </p>
+
+  <div id="flags"></div>
+
+  <button type="button" id="analyze">
+    Analyze Today's Check-in
+  </button>
+
+  <div class="demo-controls">
+    <small>DEMO CONTROLS</small>
+    <p>
+      For hackathon demonstration only. Loads an example symptom setback
+      so the recovery analysis can be tested quickly.
+    </p>
+    <button type="button" class="secondary" id="demo">
+      Demo: Load Example Setback
+    </button>
+  </div>
+</section>
+
+
+<div class="stack">
+
+<!-- TODAY'S CHECK-IN SUMMARY -->
+<section class="card">
+  <small>TODAY'S ANALYSIS</small>
+  <div class="top">
+    <h2>Today's Check-in Summary</h2>
+    <button class="copy" id="copyToday">Copy</button>
+  </div>
+
+  <p>
+    This summary is generated only when you choose
+    <b>Analyze Today's Check-in</b>.
+  </p>
+
+  <pre id="todaySummary">No check-in analyzed yet.</pre>
+</section>
+
+
+<!-- CURRENT PATTERN -->
+<section class="card">
+  <small>RECOVERY PATTERN</small>
+
+  <div class="top">
+    <h2 id="pattern">—</h2>
+    <strong id="burden">—</strong>
+  </div>
+
+  <p id="headline">
+    Complete and analyze today's check-in to update your recovery pattern.
+  </p>
+
+  <div id="safety"></div>
+</section>
+
+
+<!-- TIMELINE -->
+<section class="card">
+  <h2>Recovery Timeline</h2>
+  <p>
+    View how your recorded recovery pattern changes across check-ins.
+  </p>
+  <canvas id="chart"></canvas>
+</section>
+
+
+<!-- PLAN -->
+<section class="card">
+  <small>TODAY</small>
+  <h2>Daily Recovery Plan</h2>
+  <div id="plan" class="plan"></div>
+</section>
+
+
+<!-- INSIGHTS -->
+<section class="card">
+  <small>YOUR DATA</small>
+  <h2>Pattern Insights</h2>
+  <ul id="insights"></ul>
+</section>
+
+
+<!-- DOCTOR SUMMARY -->
+<section class="card">
+  <small>FOR APPOINTMENTS</small>
+
+  <div class="top">
+    <h2>Doctor Visit Summary</h2>
+    <button class="copy" id="copy">Copy</button>
+  </div>
+
+  <p>
+    A longer summary based on your saved check-ins over time.
+  </p>
+
+  <pre id="summary"></pre>
+</section>
+
+
+<!-- RESPONSIBLE AI -->
+<section class="card">
+  <h2>Responsible AI Guardrails</h2>
+
+  <div class="guards">
+    <div>
+      <b>No diagnosis</b>
+      <span>AI identifies patterns, not diseases.</span>
+    </div>
+
+    <div>
+      <b>Safety overrides AI</b>
+      <span>Emergency warning signs use deterministic rules.</span>
+    </div>
+
+    <div>
+      <b>Duration is context</b>
+      <span>
+        Symptom duration can be highlighted but does not determine
+        medical seriousness by itself.
+      </span>
+    </div>
+
+    <div>
+      <b>Transparent limits</b>
+      <span>The ML model currently uses synthetic demonstration data.</span>
+    </div>
+  </div>
+</section>
+
+</div>
+</main>
+
+<footer>
+  Educational hackathon prototype — not a medical device and not a
+  replacement for professional or emergency care.
+</footer>
+
+
 <script>
-const fs=[["headache","Headache severity"],["dizziness","Dizziness"],["sleep","Sleep quality"],["screen_tolerance","Screen tolerance"],["concentration","Concentration difficulty"],["activity","Activity tolerance"]];
-for(const [id,n] of fs){sliders.innerHTML+=`<div class="slider"><div><b>${n}</b><span id="${id}v">5</span></div><input id="${id}" type="range" min="0" max="10" value="5" oninput="document.getElementById('${id}v').textContent=this.value"></div>`}
-const fl=[["worsening_headache","Headache getting much worse"],["repeated_vomiting","Repeated vomiting"],["seizure","Seizure"],["weakness","New weakness/numbness"],["confusion","Increasing confusion"],["hard_to_wake","Hard to wake"],["slurred_speech","Slurred speech"],["vision_loss","Major new vision change"]];
-flags.innerHTML=fl.map(x=>`<label><input type="checkbox" value="${x[0]}"> ${x[1]}</label>`).join("");
-let ch;
-async function refresh(){let d=await fetch("/api/status").then(r=>r.json()),e=d.latest;if(e){pattern.textContent=e.pattern.replace("_"," ");burden.textContent=e.burden_score;headline.textContent=e.headline;safety.innerHTML=e.safety.urgent?`<div class="alert"><b>${e.safety.title}</b><p>${e.safety.message}</p></div>`:`<div class="safe"><b>No urgent warning triggered by this entry.</b><br><small>This does not guarantee symptoms are medically safe.</small></div>`}plan.innerHTML=d.daily_plan.map(x=>`<div><b>${x[0]}</b><span>${x[1]}</span></div>`).join("");insights.innerHTML=d.insights.map(x=>`<li>${x}</li>`).join("");summary.textContent=d.clinician_summary;if(ch)ch.destroy();ch=new Chart(chart,{type:"line",data:{labels:d.entries.map(x=>"Day "+x.day),datasets:[{data:d.entries.map(x=>x.burden_score),borderWidth:3,tension:.25}]},options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:10,title:{display:true,text:"Lower is better"}}}}})}
-analyze.onclick=async()=>{let p={};fs.forEach(x=>p[x[0]]=+document.getElementById(x[0]).value);p.notes=notes.value;p.red_flags=[...document.querySelectorAll("#flags input:checked")].map(x=>x.value);await fetch("/api/entry",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});refresh()}
-demo.onclick=()=>{let d={headache:8,dizziness:7,sleep:3,screen_tolerance:2,concentration:8,activity:2};fs.forEach(x=>{document.getElementById(x[0]).value=d[x[0]];document.getElementById(x[0]+"v").textContent=d[x[0]]});notes.value="Symptoms flared after a long screen session."}
-copy.onclick=()=>navigator.clipboard.writeText(summary.textContent);refresh();
-</script></body></html>
+
+const defaultSymptoms = [
+  {
+    id: "headache",
+    name: "Headache severity",
+    direction: "worse",
+    value: 5
+  },
+  {
+    id: "dizziness",
+    name: "Dizziness",
+    direction: "worse",
+    value: 5
+  },
+  {
+    id: "sleep",
+    name: "Sleep quality",
+    direction: "better",
+    value: 5
+  },
+  {
+    id: "screen_tolerance",
+    name: "Screen tolerance",
+    direction: "better",
+    value: 5
+  },
+  {
+    id: "concentration",
+    name: "Concentration difficulty",
+    direction: "worse",
+    value: 5
+  },
+  {
+    id: "activity",
+    name: "Activity tolerance",
+    direction: "better",
+    value: 5
+  }
+];
+
+let symptoms = [...defaultSymptoms];
+let savedNotes = [];
+let ch = null;
+
+const checkinDate = document.getElementById("checkin_date");
+const today = new Date().toISOString().split("T")[0];
+
+checkinDate.value = today;
+document.getElementById("trigger_start").value = today;
+
+
+function safeId(text) {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+
+function renderSymptoms() {
+  const container = document.getElementById("symptomList");
+
+  container.innerHTML = symptoms.map((s, index) => `
+    <div class="symptom-item">
+      <div class="symptom-heading">
+        <div>
+          <b>${s.name}</b>
+          <small>
+            Higher is ${s.direction === "worse" ? "worse" : "better"}
+          </small>
+        </div>
+
+        <button
+          type="button"
+          class="remove-symptom"
+          onclick="removeSymptom(${index})"
+        >
+          Remove
+        </button>
+      </div>
+
+      <div class="slider">
+        <div>
+          <span>Today</span>
+          <strong id="${s.id}v">${s.value}</strong>
+        </div>
+
+        <input
+          id="${s.id}"
+          type="range"
+          min="0"
+          max="10"
+          value="${s.value}"
+          oninput="
+            document.getElementById('${s.id}v').textContent=this.value;
+            updateSymptomValue('${s.id}', this.value);
+          "
+        >
+      </div>
+
+      <div class="duration-row">
+        <label>
+          Symptom started
+          <input id="${s.id}_start" type="date">
+        </label>
+
+        <label>
+          Duration
+          <input
+            id="${s.id}_duration"
+            type="text"
+            placeholder="e.g. 5 days"
+          >
+        </label>
+      </div>
+    </div>
+  `).join("");
+}
+
+
+function updateSymptomValue(id, value) {
+  const symptom = symptoms.find(x => x.id === id);
+  if (symptom) symptom.value = Number(value);
+}
+
+
+function removeSymptom(index) {
+  symptoms.splice(index, 1);
+  renderSymptoms();
+}
+
+
+document.getElementById("addSymptom").onclick = () => {
+  const input = document.getElementById("newSymptom");
+  const name = input.value.trim();
+
+  if (!name) return;
+
+  let id = safeId(name);
+
+  if (!id) return;
+
+  if (symptoms.some(x => x.id === id)) {
+    alert("That symptom is already being tracked.");
+    return;
+  }
+
+  symptoms.push({
+    id,
+    name,
+    direction: "worse",
+    value: 5,
+    custom: true
+  });
+
+  input.value = "";
+  renderSymptoms();
+};
+
+
+function renderNotes() {
+  const box = document.getElementById("savedNotes");
+
+  if (!savedNotes.length) {
+    box.innerHTML =
+      `<p class="muted">No notes added for today's check-in yet.</p>`;
+    return;
+  }
+
+  box.innerHTML = savedNotes.map((item, index) => `
+    <div class="saved-note">
+      <div>
+        <b>${item.text}</b>
+        <span>
+          ${item.start ? "Started: " + item.start : ""}
+          ${item.duration ? " • Duration: " + item.duration : ""}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        onclick="removeNote(${index})"
+      >
+        Remove
+      </button>
+    </div>
+  `).join("");
+}
+
+
+function removeNote(index) {
+  savedNotes.splice(index, 1);
+  renderNotes();
+}
+
+
+document.getElementById("addNote").onclick = () => {
+  const text = document.getElementById("notes").value.trim();
+  const start = document.getElementById("trigger_start").value;
+  const duration =
+    document.getElementById("trigger_duration").value.trim();
+
+  if (!text) {
+    alert("Enter a note or possible trigger first.");
+    return;
+  }
+
+  savedNotes.push({
+    text,
+    start,
+    duration
+  });
+
+  document.getElementById("notes").value = "";
+  document.getElementById("trigger_duration").value = "";
+
+  renderNotes();
+};
+
+
+const warningFlags = [
+  ["worsening_headache", "Headache getting much worse"],
+  ["repeated_vomiting", "Repeated vomiting"],
+  ["seizure", "Seizure"],
+  ["weakness", "New weakness/numbness"],
+  ["confusion", "Increasing confusion"],
+  ["hard_to_wake", "Hard to wake"],
+  ["slurred_speech", "Slurred speech"],
+  ["vision_loss", "Major new vision change"]
+];
+
+document.getElementById("flags").innerHTML =
+  warningFlags.map(x => `
+    <label>
+      <input type="checkbox" value="${x[0]}">
+      ${x[1]}
+    </label>
+  `).join("");
+
+
+function getFixedValue(id, fallback = 5) {
+  const symptom = symptoms.find(x => x.id === id);
+  return symptom ? Number(symptom.value) : fallback;
+}
+
+
+function collectDurations() {
+  const result = {};
+
+  symptoms.forEach(s => {
+    const start = document.getElementById(`${s.id}_start`);
+    const duration = document.getElementById(`${s.id}_duration`);
+
+    result[s.id] = {
+      name: s.name,
+      start: start ? start.value : "",
+      duration: duration ? duration.value.trim() : ""
+    };
+  });
+
+  return result;
+}
+
+
+function buildTodaySummary(result, payload) {
+  const lines = [
+    "RECOVERPATH AI — TODAY'S CHECK-IN SUMMARY",
+    "",
+    `Check-in date: ${payload.checkin_date || "Not provided"}`,
+    `Recovery pattern: ${result.pattern.replaceAll("_", " ")}`,
+    `Symptom burden: ${result.burden_score}/10`,
+    "",
+    "TODAY'S TRACKED INDICATORS"
+  ];
+
+  symptoms.forEach(s => {
+    const duration = payload.symptom_durations[s.id];
+
+    lines.push(
+      `${s.name}: ${s.value}/10` +
+      (duration?.duration ? ` — ${duration.duration}` : "") +
+      (duration?.start ? ` — started ${duration.start}` : "")
+    );
+  });
+
+  if (savedNotes.length) {
+    lines.push("", "NOTES / POSSIBLE TRIGGERS");
+
+    savedNotes.forEach(item => {
+      lines.push(
+        `- ${item.text}` +
+        (item.duration ? ` — ${item.duration}` : "") +
+        (item.start ? ` — started ${item.start}` : "")
+      );
+    });
+  }
+
+  lines.push("", "SAFETY");
+
+  if (result.safety.urgent) {
+    lines.push(result.safety.message);
+  } else {
+    lines.push(
+      "No urgent warning was triggered by this check-in. " +
+      "This does not guarantee that symptoms are medically safe."
+    );
+  }
+
+  if (result.guidance && result.guidance.length) {
+    lines.push("", "NEXT CONSIDERATIONS");
+
+    result.guidance.forEach(item => {
+      lines.push(`- ${item}`);
+    });
+  }
+
+  lines.push(
+    "",
+    "This is a non-diagnostic summary based on self-reported information."
+  );
+
+  return lines.join("\n");
+}
+
+
+async function refresh() {
+  const d = await fetch("/api/status").then(r => r.json());
+  const e = d.latest;
+
+  if (e) {
+    document.getElementById("pattern").textContent =
+      e.pattern.replaceAll("_", " ");
+
+    document.getElementById("burden").textContent =
+      e.burden_score;
+
+    document.getElementById("headline").textContent =
+      e.headline;
+
+    document.getElementById("safety").innerHTML =
+      e.safety.urgent
+        ? `<div class="alert">
+             <b>${e.safety.title}</b>
+             <p>${e.safety.message}</p>
+           </div>`
+        : `<div class="safe">
+             <b>No urgent warning triggered by the latest entry.</b><br>
+             <small>
+               This does not guarantee symptoms are medically safe.
+             </small>
+           </div>`;
+  }
+
+  document.getElementById("plan").innerHTML =
+    d.daily_plan.map(x => `
+      <div>
+        <b>${x[0]}</b>
+        <span>${x[1]}</span>
+      </div>
+    `).join("");
+
+  document.getElementById("insights").innerHTML =
+    d.insights.map(x => `<li>${x}</li>`).join("");
+
+  document.getElementById("summary").textContent =
+    d.clinician_summary;
+
+  if (ch) ch.destroy();
+
+  ch = new Chart(
+    document.getElementById("chart"),
+    {
+      type: "line",
+      data: {
+        labels: d.entries.map(x => "Day " + x.day),
+        datasets: [{
+          data: d.entries.map(x => x.burden_score),
+          borderWidth: 3,
+          tension: .25
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            min: 0,
+            max: 10,
+            title: {
+              display: true,
+              text: "Lower is better"
+            }
+          }
+        }
+      }
+    }
+  );
+}
+
+
+document.getElementById("analyze").onclick = async () => {
+
+  const payload = {
+    checkin_date: checkinDate.value,
+
+    headache: getFixedValue("headache"),
+    dizziness: getFixedValue("dizziness"),
+    sleep: getFixedValue("sleep"),
+    screen_tolerance: getFixedValue("screen_tolerance"),
+    concentration: getFixedValue("concentration"),
+    activity: getFixedValue("activity"),
+
+    tracked_symptoms: symptoms.map(s => ({
+      id: s.id,
+      name: s.name,
+      value: s.value,
+      direction: s.direction
+    })),
+
+    symptom_durations: collectDurations(),
+
+    saved_notes: savedNotes,
+
+    notes: savedNotes.map(x => x.text).join("; "),
+
+    red_flags: [
+      ...document.querySelectorAll("#flags input:checked")
+    ].map(x => x.value)
+  };
+
+  const response = await fetch(
+    "/api/entry",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    }
+  );
+
+  if (!response.ok) {
+    document.getElementById("todaySummary").textContent =
+      "The check-in could not be analyzed.";
+    return;
+  }
+
+  const result = await response.json();
+
+  document.getElementById("todaySummary").textContent =
+    buildTodaySummary(result, payload);
+
+  await refresh();
+};
+
+
+document.getElementById("demo").onclick = () => {
+
+  const demoValues = {
+    headache: 8,
+    dizziness: 7,
+    sleep: 3,
+    screen_tolerance: 2,
+    concentration: 8,
+    activity: 2
+  };
+
+  symptoms.forEach(s => {
+    if (demoValues[s.id] !== undefined) {
+      s.value = demoValues[s.id];
+    }
+  });
+
+  savedNotes = [{
+    text: "Symptoms flared after a long screen session.",
+    start: today,
+    duration: "Several hours"
+  }];
+
+  renderSymptoms();
+  renderNotes();
+};
+
+
+document.getElementById("copyToday").onclick = () =>
+  navigator.clipboard.writeText(
+    document.getElementById("todaySummary").textContent
+  );
+
+
+document.getElementById("copy").onclick = () =>
+  navigator.clipboard.writeText(
+    document.getElementById("summary").textContent
+  );
+
+
+renderSymptoms();
+renderNotes();
+refresh();
+
+</script>
+
+</body>
+</html>
