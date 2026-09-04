@@ -292,7 +292,7 @@ details.ai-info summary{
 <header>
 <div>
 <small>RESPONSIBLE AI • CONCUSSION RECOVERY PROTOTYPE</small>
-<h1>RecoverPath AI</h1>
+<h1>RecoverPath</h1>
 <p>
 Track symptoms, understand changes over time, organize daily routines,
 and keep clearer records for medical appointments.
@@ -709,7 +709,7 @@ placeholder="Anything else from the visit..."></textarea>
 
 <details class="ai-info">
 
-<summary>How RecoverPath AI works & its limitations</summary>
+<summary>How RecoverPath works & its limitations</summary>
 
 <p>
 RecoverPath uses machine learning to identify changes in defined
@@ -1216,7 +1216,7 @@ urgent_change.onchange=function(){
     <div class="alert" style="margin-top:12px">
       <b>Safety notice</b>
       <p>
-      Do not rely on RecoverPath AI to determine whether emergency care is
+      Do not rely on RecoverPath to determine whether emergency care is
       needed. Sudden, severe, or rapidly worsening symptoms may require
       urgent professional medical evaluation.
       </p>
@@ -2386,7 +2386,7 @@ dismissReminder.onclick=()=>{
 
 function buildAnalysis(result,payload){
   const lines=[
-    "RECOVERPATH AI — DAILY RECOVERY REVIEW",
+    "RECOVERPATH — DAILY RECOVERY REVIEW",
     "",
     `Date: ${payload.checkin_date}`,
     `Recovery pattern: ${String(result.pattern).replaceAll("_"," ")}`,
